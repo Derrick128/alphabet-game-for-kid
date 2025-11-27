@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>字母與數學小偵探 (修正版)</title>
+    <title>字母與數學小偵探 (晉級版)</title>
     <style>
         /* --- CSS 樣式設計 (與前一個版本相同，保持美觀) --- */
         body {
@@ -28,23 +28,30 @@
         }
 
         h1 {
-            color: #ff6f61; /* 溫暖的紅色 */
+            color: #ff6f61;
             font-size: 2.5em;
             margin-bottom: 10px;
         }
 
         #level-display {
             font-size: 1.5em;
-            color: #1a535c; /* 深青色 */
+            color: #1a535c;
             margin-bottom: 20px;
         }
 
         #instruction-area {
             font-size: 1.8em;
-            color: #4ecdc4; /* 綠松石色 */
+            color: #4ecdc4;
             margin-bottom: 30px;
             min-height: 40px;
             padding: 5px;
+        }
+        
+        /* 新增：分數顯示區塊 */
+        #score-display {
+            font-size: 1.2em;
+            color: #1a535c;
+            margin-top: 10px;
         }
 
         #game-area {
@@ -90,12 +97,12 @@
 
         /* 反饋顏色 */
         .correct {
-            background-color: #4cd6a6 !important; /* 綠色 */
+            background-color: #4cd6a6 !important;
             border-color: #3aa884 !important;
         }
 
         .incorrect {
-            background-color: #ff7675 !important; /* 紅色 */
+            background-color: #ff7675 !important;
             border-color: #cc5e5e !important;
         }
 
@@ -133,6 +140,8 @@
         
         <div id="game-area">
             </div>
+        
+        <div id="score-display"></div> 
 
         <div id="feedback-area"></div>
         <button id="start-button" onclick="handleStartClick()">開始遊戲</button>
@@ -158,27 +167,32 @@
         ];
         
         // --- 全域狀態變數 ---
-        let currentLevel = 0;
+        let currentLevel = 0; // 當前的大關卡號 (1-5)
+        let currentRound = 0; // 當前關卡內的小題號 (1-10)
+        let score = 0;      // 當前關卡的得分
         let targetAnswer = '';
         const MAX_LEVELS = 5;
-        let levelTypes = [];
+        const MAX_ROUNDS = 10; // 每個大關有 10 題
+        const PASS_SCORE = 9;  // 晉級分數：9 分以上
+
+        // 關卡類型定義：
+        const levelTypes = ['alphabet', 'phonics', 'alphabet', 'addition', 'subtraction'];
 
         // --- DOM 元素快取 ---
         const gameArea = document.getElementById('game-area');
         const instructionArea = document.getElementById('instruction-area');
         const feedbackArea = document.getElementById('feedback-area');
         const levelDisplay = document.getElementById('level-display');
+        const scoreDisplay = document.getElementById('score-display'); // 新增分數顯示
         const startButton = document.getElementById('start-button');
 
-        // --- 修正後的啟動點 ---
+        // --- 啟動函式 ---
         function handleStartClick() {
-            // 修正：當使用者點擊後，先強制播放一個靜音，以解除瀏覽器的語音限制
-            speak(' '); 
+            speak(' '); // 啟動語音引擎
             startGame();
         }
 
         // --- 輔助函式 ---
-
         function shuffle(array) {
             for (let i = array.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
@@ -186,16 +200,10 @@
             }
         }
 
-        /**
-         * 播放語音，並處理語音引擎未載入的問題
-         * @param {string} text 要朗讀的文字
-         */
         function speak(text) {
             if ('speechSynthesis' in window) {
-                // 修正：確保語音引擎已經載入
                 const voices = speechSynthesis.getVoices();
                 if (voices.length === 0) {
-                     // 如果沒有載入，嘗試觸發載入
                      speechSynthesis.onvoiceschanged = () => speak(text);
                      return; 
                 }
@@ -214,32 +222,69 @@
             }
         }
 
+        function updateDisplay() {
+            levelDisplay.textContent = `關卡: ${currentLevel} / ${MAX_LEVELS}`;
+            scoreDisplay.textContent = `分數: ${score} / ${currentRound}`;
+        }
+
         // --- 遊戲流程函式 ---
 
         function startGame() {
-            currentLevel = 0;
+            currentLevel = 1; // 從第一關開始
+            score = 0;
+            currentRound = 0;
             startButton.style.display = 'none';
-            // 關卡順序設定
-            levelTypes = ['alphabet', 'phonics', 'alphabet', 'addition', 'subtraction'];
-            levelDisplay.textContent = `關卡: ${currentLevel} / ${MAX_LEVELS}`;
-            nextLevel();
+            // 由於關卡 1 是字母挑戰，所以直接載入
+            loadCurrentLevel();
+        }
+        
+        /**
+         * 檢查關卡是否結束，或是否可以晉級
+         */
+        function checkLevelEnd() {
+            // 如果當前關卡的小題數已經達到上限
+            if (currentRound >= MAX_ROUNDS) {
+                gameArea.innerHTML = '';
+                
+                // 檢查是否達到晉級標準 (9 分以上)
+                if (score >= PASS_SCORE) {
+                    currentLevel++; // 晉級
+                    feedbackArea.textContent = `🏆 恭喜您！本關得到 ${score} 分，達到晉級標準！`;
+
+                    if (currentLevel > MAX_LEVELS) {
+                        endGame(true); // 遊戲通關
+                        return;
+                    }
+                    
+                    // 進入下一關前重置分數
+                    score = 0;
+                    currentRound = 0;
+                    
+                    // 延遲後載入新關卡
+                    setTimeout(() => {
+                        feedbackArea.textContent = '';
+                        loadCurrentLevel();
+                    }, 4000);
+                    
+                } else {
+                    // 未達到晉級標準，停留在當前關卡或遊戲結束
+                    feedbackArea.textContent = `😭 本關得到 ${score} 分，未達 ${PASS_SCORE} 分標準。`;
+                    endGame(false); // 挑戰失敗，遊戲結束
+                }
+                return true;
+            }
+            return false;
         }
 
-        function nextLevel() {
-            if (currentLevel >= MAX_LEVELS) {
-                endGame();
-                return;
-            }
-
-            currentLevel++;
-            levelDisplay.textContent = `關卡: ${currentLevel} / ${MAX_LEVELS}`;
-            feedbackArea.textContent = '';
-            gameArea.innerHTML = ''; 
-
+        /**
+         * 載入當前大關卡的第一題
+         */
+        function loadCurrentLevel() {
             const levelType = levelTypes[currentLevel - 1];
-            
+
+            // 根據類型呼叫對應的題型生成器
             if (levelType === 'alphabet') {
-                loadAlphabetChallenge();
+                loadAlphabetChallenge(); 
             } else if (levelType === 'phonics') {
                 loadPhonicsChallenge();
             } else if (levelType === 'addition') {
@@ -247,18 +292,21 @@
             } else if (levelType === 'subtraction') {
                 loadSubtractionChallenge();
             }
+            
+            currentRound++; // 增加題號
+            updateDisplay();
         }
 
         function checkAnswer(selectedAnswer, buttonElement) {
             gameArea.querySelectorAll('.game-button').forEach(btn => btn.onclick = null);
             
-            // 確保比較時，數字和字串都能正確比對
             const isCorrect = (typeof selectedAnswer === 'string' && selectedAnswer.trim() === targetAnswer.trim()) || 
-                              (selectedAnswer == targetAnswer); // 數字比較
+                              (selectedAnswer == targetAnswer); 
 
             if (isCorrect) {
                 buttonElement.classList.add('correct');
-                feedbackArea.textContent = '🌟 太棒了！答對了！';
+                feedbackArea.textContent = '🌟 答對了！';
+                score++; // 加分
                 speak('Great job!'); 
             } else {
                 buttonElement.classList.add('incorrect');
@@ -271,17 +319,36 @@
                 speak('Oh no. Try the next one.'); 
             }
 
+            // 立即更新分數顯示
+            updateDisplay();
+            
+            // 延遲後檢查關卡是否結束，如果沒結束就載入下一題
             setTimeout(() => {
-                nextLevel();
+                if (!checkLevelEnd()) {
+                    feedbackArea.textContent = '';
+                    loadCurrentLevel(); // 載入本關的下一題
+                }
             }, 3000); 
         }
 
-        function endGame() {
-            instructionArea.textContent = '恭喜您完成了所有挑戰！';
-            feedbackArea.textContent = '你是最棒的偵探！';
+        /**
+         * 遊戲通關或失敗結束
+         * @param {boolean} success - 是否為通關結束
+         */
+        function endGame(success) {
             gameArea.innerHTML = '';
+            scoreDisplay.textContent = '';
+
+            if (success) {
+                instructionArea.textContent = '🎉 恭喜您！您完成了所有 5 個挑戰！';
+                feedbackArea.textContent = '你是最棒的超級偵探！';
+            } else {
+                instructionArea.textContent = `挑戰失敗，停留在關卡 ${currentLevel}。`;
+                feedbackArea.textContent = '沒關係，再試一次，你一定可以！';
+            }
+            
             startButton.textContent = '再玩一次';
-            startButton.onclick = handleStartClick; // 使用修正後的點擊處理器
+            startButton.onclick = handleStartClick;
             startButton.style.display = 'block';
         }
 
@@ -299,7 +366,7 @@
             let choicesArray = Array.from(choices);
             shuffle(choicesArray); 
 
-            instructionArea.textContent = '請聽聲音，並點擊您聽到的字母。';
+            instructionArea.textContent = `第 ${currentRound} 題：請聽聲音，並點擊您聽到的字母。`;
             renderButtons(choicesArray, 'letter-button');
 
             setTimeout(() => {
@@ -314,17 +381,15 @@
             const targetWordObj = choicesObjs[Math.floor(Math.random() * 4)];
             targetAnswer = targetWordObj.alt; 
 
-            instructionArea.textContent = '請聽首字母發音，點擊正確的物品。';
+            instructionArea.textContent = `第 ${currentRound} 題：請聽首字母發音，點擊正確的物品。`;
             
             const alts = choicesObjs.map(obj => obj.alt);
             renderButtons(alts, 'letter-button');
 
             setTimeout(() => {
-                // 為了避免混淆，這裡唸字母名稱而不是 Phonics 發音 (因為語音引擎難以控制 Phonics 效果)
                 speak(targetWordObj.sound); 
             }, 1500);
         }
-
 
         // --- 關卡實作：加法 (Level 4) ---
         function loadAdditionChallenge() {
@@ -333,7 +398,7 @@
             const correctAnswer = num1 + num2;
             targetAnswer = correctAnswer.toString();
 
-            instructionArea.textContent = `請計算：${num1} + ${num2} = ?`;
+            instructionArea.textContent = `第 ${currentRound} 題：請計算 ${num1} + ${num2} = ?`;
             
             let choices = new Set([correctAnswer]);
             while (choices.size < 3) {
@@ -356,7 +421,7 @@
             const correctAnswer = num1 - num2;
             targetAnswer = correctAnswer.toString();
 
-            instructionArea.textContent = `請計算：${num1} - ${num2} = ?`;
+            instructionArea.textContent = `第 ${currentRound} 題：請計算 ${num1} - ${num2} = ?`;
             
             let choices = new Set([correctAnswer]);
             while (choices.size < 3) {
@@ -379,13 +444,11 @@
                 const button = document.createElement('div');
                 button.className = 'game-button ' + className;
                 button.textContent = content;
-                // 確保點擊時，傳遞的內容是字串
                 button.onclick = () => checkAnswer(content.toString(), button);
                 gameArea.appendChild(button);
             });
         }
 
-        // 首次載入時，嘗試載入語音，但不要發出聲音
         window.onload = () => {
              if ('speechSynthesis' in window) {
                 speechSynthesis.getVoices();
