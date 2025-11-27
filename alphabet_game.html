@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>字母與數學小偵探 (修正版)</title>
+    <style>
+        /* --- CSS 樣式設計 (與前一個版本相同，保持美觀) --- */
+        body {
+            font-family: 'Arial Black', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #f7f7f7;
+            color: #333;
+        }
+
+        #game-container {
+            width: 90%;
+            max-width: 800px;
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        h1 {
+            color: #ff6f61; /* 溫暖的紅色 */
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        #level-display {
+            font-size: 1.5em;
+            color: #1a535c; /* 深青色 */
+            margin-bottom: 20px;
+        }
+
+        #instruction-area {
+            font-size: 1.8em;
+            color: #4ecdc4; /* 綠松石色 */
+            margin-bottom: 30px;
+            min-height: 40px;
+            padding: 5px;
+        }
+
+        #game-area {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 20px;
+            min-height: 200px; 
+        }
+
+        .game-button {
+            width: 45%;
+            padding: 20px 10px;
+            font-size: 3em; 
+            border: 5px solid #ff6f61;
+            border-radius: 15px;
+            background-color: #ffeaa7; 
+            cursor: pointer;
+            transition: all 0.1s ease;
+            user-select: none;
+            box-shadow: 0 5px 0 #e15f51;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+        
+        .math-button {
+             width: 30%;
+             font-size: 3.5em;
+             padding: 15px 5px;
+        }
+
+        .game-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 0 #e15f51;
+        }
+
+        .game-button:active {
+            transform: translateY(2px);
+            box-shadow: 0 3px 0 #e15f51;
+        }
+
+        /* 反饋顏色 */
+        .correct {
+            background-color: #4cd6a6 !important; /* 綠色 */
+            border-color: #3aa884 !important;
+        }
+
+        .incorrect {
+            background-color: #ff7675 !important; /* 紅色 */
+            border-color: #cc5e5e !important;
+        }
+
+        #feedback-area {
+            font-size: 1.8em;
+            margin-top: 20px;
+            min-height: 30px;
+            color: #ff6f61;
+        }
+
+        #start-button {
+            padding: 15px 30px;
+            font-size: 1.5em;
+            background-color: #4ecdc4;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            margin-top: 20px;
+            box-shadow: 0 5px 0 #3aa884;
+            transition: background-color 0.1s;
+        }
+
+        #start-button:hover {
+            background-color: #3aa884;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        <h1>字母與數學小偵探 🕵️‍♀️🔢</h1>
+        <div id="level-display">關卡: 0 / 5</div>
+        <div id="instruction-area">點擊「開始遊戲」來啟動挑戰！</div>
+        
+        <div id="game-area">
+            </div>
+
+        <div id="feedback-area"></div>
+        <button id="start-button" onclick="handleStartClick()">開始遊戲</button>
+    </div>
+
+    <script>
+        // --- 核心資料結構 ---
+        
+        const ALPHABET = [
+            'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 
+            'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'
+        ];
+
+        const PHONICS_WORDS = [
+            { letter: 'A', word: 'Apple', alt: '🍎 蘋果', sound: 'A' },
+            { letter: 'B', word: 'Ball', alt: '⚽ 球', sound: 'B' },
+            { letter: 'C', word: 'Cat', alt: '🐈 貓', sound: 'C' },
+            { letter: 'D', word: 'Dog', alt: '🐕 狗', sound: 'D' },
+            { letter: 'E', word: 'Egg', alt: '🥚 蛋', sound: 'E' },
+            { letter: 'S', word: 'Sun', alt: '☀️ 太陽', sound: 'S' },
+            { letter: 'T', word: 'Tree', alt: '🌲 樹', sound: 'T' },
+            { letter: 'Z', word: 'Zip', alt: '👝 拉鍊', sound: 'Z' },
+        ];
+        
+        // --- 全域狀態變數 ---
+        let currentLevel = 0;
+        let targetAnswer = '';
+        const MAX_LEVELS = 5;
+        let levelTypes = [];
+
+        // --- DOM 元素快取 ---
+        const gameArea = document.getElementById('game-area');
+        const instructionArea = document.getElementById('instruction-area');
+        const feedbackArea = document.getElementById('feedback-area');
+        const levelDisplay = document.getElementById('level-display');
+        const startButton = document.getElementById('start-button');
+
+        // --- 修正後的啟動點 ---
+        function handleStartClick() {
+            // 修正：當使用者點擊後，先強制播放一個靜音，以解除瀏覽器的語音限制
+            speak(' '); 
+            startGame();
+        }
+
+        // --- 輔助函式 ---
+
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        /**
+         * 播放語音，並處理語音引擎未載入的問題
+         * @param {string} text 要朗讀的文字
+         */
+        function speak(text) {
+            if ('speechSynthesis' in window) {
+                // 修正：確保語音引擎已經載入
+                const voices = speechSynthesis.getVoices();
+                if (voices.length === 0) {
+                     // 如果沒有載入，嘗試觸發載入
+                     speechSynthesis.onvoiceschanged = () => speak(text);
+                     return; 
+                }
+                
+                let voice = voices.find(v => v.lang === 'en-US' || v.lang === 'en-GB') || voices[0];
+                
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.voice = voice;
+                utterance.pitch = 1.0;
+                utterance.rate = 0.8; 
+                
+                window.speechSynthesis.cancel();
+                window.speechSynthesis.speak(utterance);
+            } else {
+                instructionArea.textContent = '🔊 請找出: ' + text;
+            }
+        }
+
+        // --- 遊戲流程函式 ---
+
+        function startGame() {
+            currentLevel = 0;
+            startButton.style.display = 'none';
+            // 關卡順序設定
+            levelTypes = ['alphabet', 'phonics', 'alphabet', 'addition', 'subtraction'];
+            levelDisplay.textContent = `關卡: ${currentLevel} / ${MAX_LEVELS}`;
+            nextLevel();
+        }
+
+        function nextLevel() {
+            if (currentLevel >= MAX_LEVELS) {
+                endGame();
+                return;
+            }
+
+            currentLevel++;
+            levelDisplay.textContent = `關卡: ${currentLevel} / ${MAX_LEVELS}`;
+            feedbackArea.textContent = '';
+            gameArea.innerHTML = ''; 
+
+            const levelType = levelTypes[currentLevel - 1];
+            
+            if (levelType === 'alphabet') {
+                loadAlphabetChallenge();
+            } else if (levelType === 'phonics') {
+                loadPhonicsChallenge();
+            } else if (levelType === 'addition') {
+                loadAdditionChallenge();
+            } else if (levelType === 'subtraction') {
+                loadSubtractionChallenge();
+            }
+        }
+
+        function checkAnswer(selectedAnswer, buttonElement) {
+            gameArea.querySelectorAll('.game-button').forEach(btn => btn.onclick = null);
+            
+            // 確保比較時，數字和字串都能正確比對
+            const isCorrect = (typeof selectedAnswer === 'string' && selectedAnswer.trim() === targetAnswer.trim()) || 
+                              (selectedAnswer == targetAnswer); // 數字比較
+
+            if (isCorrect) {
+                buttonElement.classList.add('correct');
+                feedbackArea.textContent = '🌟 太棒了！答對了！';
+                speak('Great job!'); 
+            } else {
+                buttonElement.classList.add('incorrect');
+                gameArea.querySelectorAll('.game-button').forEach(btn => {
+                    if (btn.textContent.trim() == targetAnswer) {
+                        btn.classList.add('correct');
+                    }
+                });
+                feedbackArea.textContent = `❌ 錯了，正確答案是 ${targetAnswer}。`;
+                speak('Oh no. Try the next one.'); 
+            }
+
+            setTimeout(() => {
+                nextLevel();
+            }, 3000); 
+        }
+
+        function endGame() {
+            instructionArea.textContent = '恭喜您完成了所有挑戰！';
+            feedbackArea.textContent = '你是最棒的偵探！';
+            gameArea.innerHTML = '';
+            startButton.textContent = '再玩一次';
+            startButton.onclick = handleStartClick; // 使用修正後的點擊處理器
+            startButton.style.display = 'block';
+        }
+
+        // --- 關卡實作：字母聽力 (Level 1, 3) ---
+        function loadAlphabetChallenge() {
+            const levelTargetLetter = ALPHABET[Math.floor(Math.random() * ALPHABET.length)];
+            targetAnswer = levelTargetLetter; 
+
+            let choices = new Set([levelTargetLetter]);
+            while (choices.size < 4) {
+                const randomLetter = ALPHABET[Math.floor(Math.
