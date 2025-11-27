@@ -292,4 +292,106 @@
 
             let choices = new Set([levelTargetLetter]);
             while (choices.size < 4) {
-                const randomLetter = ALPHABET[Math.floor(Math.
+                const randomLetter = ALPHABET[Math.floor(Math.random() * ALPHABET.length)];
+                choices.add(randomLetter);
+            }
+            
+            let choicesArray = Array.from(choices);
+            shuffle(choicesArray); 
+
+            instructionArea.textContent = '請聽聲音，並點擊您聽到的字母。';
+            renderButtons(choicesArray, 'letter-button');
+
+            setTimeout(() => {
+                speak(levelTargetLetter);
+            }, 1500);
+        }
+
+        // --- 關卡實作：Phonics 首字母配對 (Level 2) ---
+        function loadPhonicsChallenge() {
+            shuffle(PHONICS_WORDS);
+            const choicesObjs = PHONICS_WORDS.slice(0, 4);
+            const targetWordObj = choicesObjs[Math.floor(Math.random() * 4)];
+            targetAnswer = targetWordObj.alt; 
+
+            instructionArea.textContent = '請聽首字母發音，點擊正確的物品。';
+            
+            const alts = choicesObjs.map(obj => obj.alt);
+            renderButtons(alts, 'letter-button');
+
+            setTimeout(() => {
+                // 為了避免混淆，這裡唸字母名稱而不是 Phonics 發音 (因為語音引擎難以控制 Phonics 效果)
+                speak(targetWordObj.sound); 
+            }, 1500);
+        }
+
+
+        // --- 關卡實作：加法 (Level 4) ---
+        function loadAdditionChallenge() {
+            const num1 = Math.floor(Math.random() * 6) + 1;
+            const num2 = Math.floor(Math.random() * 6) + 1;
+            const correctAnswer = num1 + num2;
+            targetAnswer = correctAnswer.toString();
+
+            instructionArea.textContent = `請計算：${num1} + ${num2} = ?`;
+            
+            let choices = new Set([correctAnswer]);
+            while (choices.size < 3) {
+                let wrongAnswer = correctAnswer + (Math.random() > 0.5 ? 1 : -1) * (Math.floor(Math.random() * 3) + 1);
+                if (wrongAnswer >= 0 && wrongAnswer !== correctAnswer) {
+                    choices.add(wrongAnswer);
+                }
+            }
+
+            let choicesArray = Array.from(choices).map(n => n.toString());
+            shuffle(choicesArray); 
+
+            renderButtons(choicesArray, 'math-button');
+        }
+
+        // --- 關卡實作：減法 (Level 5) ---
+        function loadSubtractionChallenge() {
+            const num1 = Math.floor(Math.random() * 5) + 5;
+            const num2 = Math.floor(Math.random() * (num1 - 1)) + 1;
+            const correctAnswer = num1 - num2;
+            targetAnswer = correctAnswer.toString();
+
+            instructionArea.textContent = `請計算：${num1} - ${num2} = ?`;
+            
+            let choices = new Set([correctAnswer]);
+            while (choices.size < 3) {
+                let wrongAnswer = correctAnswer + (Math.random() > 0.5 ? 1 : -1) * (Math.floor(Math.random() * 3) + 1);
+                if (wrongAnswer >= 0 && wrongAnswer !== correctAnswer) {
+                    choices.add(wrongAnswer);
+                }
+            }
+
+            let choicesArray = Array.from(choices).map(n => n.toString());
+            shuffle(choicesArray); 
+
+            renderButtons(choicesArray, 'math-button');
+        }
+        
+        // --- 通用渲染函式 ---
+        function renderButtons(contents, className) {
+            gameArea.innerHTML = '';
+            contents.forEach(content => {
+                const button = document.createElement('div');
+                button.className = 'game-button ' + className;
+                button.textContent = content;
+                // 確保點擊時，傳遞的內容是字串
+                button.onclick = () => checkAnswer(content.toString(), button);
+                gameArea.appendChild(button);
+            });
+        }
+
+        // 首次載入時，嘗試載入語音，但不要發出聲音
+        window.onload = () => {
+             if ('speechSynthesis' in window) {
+                speechSynthesis.getVoices();
+             }
+        };
+
+    </script>
+</body>
+</html>
