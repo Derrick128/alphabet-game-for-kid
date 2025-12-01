@@ -2,513 +2,56 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>全能小學霸：英文、數學、練字</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>全能小學霸 - 首頁</title>
     <style>
-        /* --- 全局樣式 --- */
         body {
             font-family: 'Arial Rounded MT Bold', 'Microsoft JhengHei', sans-serif;
             margin: 0;
-            background-color: #f0f4c3; /* 柔和背景 */
+            background-color: #f0f4c3;
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            overflow: hidden; /* 防止捲動影響寫字 */
-            touch-action: none; /* 禁止預設觸控行為 */
         }
-
         .container {
-            width: 95%;
-            max-width: 800px;
+            width: 90%;
+            max-width: 600px;
             background-color: white;
             border-radius: 25px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-            padding: 20px;
-            text-align: center;
-            position: relative;
-            border: 5px solid #cddc39;
-        }
-
-        h1 { color: #827717; margin-top: 0; }
-        
-        .hidden { display: none !important; }
-
-        /* --- 主選單樣式 --- */
-        #menu-screen {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-            padding: 20px;
-        }
-
-        .menu-btn {
             padding: 30px;
-            font-size: 2em;
+            text-align: center;
+            border: 5px solid #cddc39;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        h1 { color: #827717; font-size: 2.5em; margin-bottom: 30px; }
+        .menu-btn {
+            display: block;
+            width: 100%;
+            padding: 25px;
+            margin: 15px 0;
+            font-size: 1.8em;
             border: none;
             border-radius: 20px;
             cursor: pointer;
-            transition: transform 0.1s;
             color: white;
+            text-decoration: none; /* 去除超連結底線 */
             box-shadow: 0 8px 0 rgba(0,0,0,0.2);
-            font-weight: bold;
+            transition: transform 0.1s;
         }
-
+        .menu-btn:active { transform: translateY(5px); box-shadow: 0 3px 0 rgba(0,0,0,0.2); }
+        
         .btn-eng { background-color: #4fc3f7; border: 4px solid #0288d1; }
         .btn-math { background-color: #ff8a65; border: 4px solid #d84315; }
         .btn-write { background-color: #aed581; border: 4px solid #558b2f; }
-
-        .menu-btn:active { transform: translateY(5px); box-shadow: 0 3px 0 rgba(0,0,0,0.2); }
-
-        /* --- 遊戲區樣式 --- */
-        #game-screen h2 { color: #00838f; }
-        #level-indicator { font-size: 1.2em; color: #555; margin-bottom: 10px; }
-        #question-text { font-size: 1.8em; color: #ef6c00; margin: 20px 0; font-weight: bold; }
-        
-        #options-area {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 15px;
-        }
-
-        .option-btn {
-            width: 40%;
-            padding: 20px;
-            font-size: 2em;
-            border: 3px solid #ccc;
-            border-radius: 15px;
-            background: #fff;
-            cursor: pointer;
-            box-shadow: 0 5px 0 #bbb;
-        }
-
-        .option-btn:active { transform: translateY(3px); box-shadow: 0 2px 0 #bbb; }
-        .correct { background-color: #b2dfdb !important; border-color: #009688 !important; }
-        .incorrect { background-color: #ffcdd2 !important; border-color: #e57373 !important; }
-
-        /* --- 練字區樣式 --- */
-        #writing-screen canvas {
-            border: 4px dashed #bdbdbd;
-            border-radius: 15px;
-            cursor: crosshair;
-            touch-action: none;
-            background-color: #fff;
-            margin: 10px auto;
-            display: block;
-        }
-
-        .writing-controls {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            margin-top: 10px;
-        }
-
-        .ctrl-btn {
-            padding: 10px 20px;
-            font-size: 1.2em;
-            border-radius: 10px;
-            border: none;
-            background-color: #7e57c2;
-            color: white;
-            cursor: pointer;
-        }
-
-        #back-btn {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            padding: 8px 15px;
-            background: #bdbdbd;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: bold;
-            color: white;
-        }
-
     </style>
 </head>
 <body>
-
     <div class="container">
-        <button id="back-btn" class="hidden" onclick="goHome()">🏠 回首頁</button>
-
-        <div id="menu-screen">
-            <h1>🎒 快樂學習樂園</h1>
-            <button class="menu-btn btn-eng" onclick="startGame('ENGLISH')">🔠 英文挑戰 (English)</button>
-            <button class="menu-btn btn-math" onclick="startGame('MATH')">🧮 數學挑戰 (Math)</button>
-            <button class="menu-btn btn-write" onclick="startWriting()">✍️ 練字小教室 (Writing)</button>
-        </div>
-
-        <div id="game-screen" class="hidden">
-            <h2 id="game-title">挑戰開始</h2>
-            <div id="level-indicator">Level 1 - 第 1/5 題</div>
-            <div id="question-text">題目載入中...</div>
-            <div id="options-area"></div>
-            <div id="feedback" style="height: 30px; margin-top: 10px; font-size: 1.5em; font-weight: bold;"></div>
-        </div>
-
-        <div id="writing-screen" class="hidden">
-            <h2 id="writing-title">練字: A</h2>
-            <canvas id="writeCanvas" width="300" height="300"></canvas>
-            
-            <div class="writing-controls">
-                <button class="ctrl-btn" onclick="prevLetter()">◀ 上一個</button>
-                <button class="ctrl-btn" style="background:#ef5350" onclick="clearCanvas()">清除重寫</button>
-                <button class="ctrl-btn" style="background:#ffa726" onclick="toggleCase()">切換大小寫</button>
-                <button class="ctrl-btn" onclick="nextLetter()">下一個 ▶</button>
-            </div>
-        </div>
+        <h1>🎒 快樂學習樂園</h1>
+        <a href="english.html" class="menu-btn btn-eng">🔠 英文挑戰</a>
+        <a href="math.html" class="menu-btn btn-math">🧮 數學挑戰</a>
+        <a href="writing.html" class="menu-btn btn-write">✍️ 練字評分</a>
     </div>
-
-    <script>
-        // --- 全域變數 ---
-        let currentMode = 'MENU';
-        let gameSubject = ''; // 'ENGLISH' or 'MATH'
-        let currentLevel = 1;
-        let currentRound = 0;
-        let score = 0;
-        let targetAnswer = '';
-        
-        // 練字相關變數
-        const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split('');
-        let currentLetterIndex = 0;
-        let isUpperCase = true;
-        let canvas, ctx;
-        let isDrawing = false;
-
-        // --- 核心資料庫 ---
-        const DB = {
-            ENGLISH: {
-                L1: { title: "Level 1: 字母聽力", type: "alphabet" },
-                L2: { title: "Level 2: 單字拼讀 (Phonics)", type: "cvc" },
-                L3: { title: "Level 3: 常見字 (Sight Words)", type: "sight" }
-            },
-            MATH: {
-                L1: { title: "Level 1: 數字比大小", type: "compare" },
-                L2: { title: "Level 2: 簡單加法", type: "add" },
-                L3: { title: "Level 3: 簡單減法", type: "sub" }
-            }
-        };
-
-        const WORDS = {
-            CVC: ['cat', 'dog', 'pig', 'box', 'hat', 'sun', 'bus', 'red', 'six', 'fox'],
-            SIGHT: ['the', 'and', 'you', 'is', 'play', 'see', 'look', 'big', 'my', 'to']
-        };
-
-        // --- 畫面導航 ---
-        function showScreen(screenId) {
-            document.querySelectorAll('.container > div').forEach(div => div.classList.add('hidden'));
-            document.getElementById(screenId).classList.remove('hidden');
-            
-            const backBtn = document.getElementById('back-btn');
-            if(screenId === 'menu-screen') backBtn.classList.add('hidden');
-            else backBtn.classList.remove('hidden');
-        }
-
-        function goHome() {
-            showScreen('menu-screen');
-            stopVoice();
-        }
-
-        // --- 語音功能 ---
-        function speak(text) {
-            if ('speechSynthesis' in window) {
-                window.speechSynthesis.cancel();
-                const u = new SpeechSynthesisUtterance(text);
-                u.lang = 'en-US';
-                u.rate = 0.8;
-                window.speechSynthesis.speak(u);
-            }
-        }
-        function stopVoice() { window.speechSynthesis.cancel(); }
-
-        // ==========================================
-        // Part A: 測驗遊戲邏輯 (英文/數學)
-        // ==========================================
-
-        function startGame(subject) {
-            gameSubject = subject;
-            currentLevel = 1;
-            startLevel();
-        }
-
-        function startLevel() {
-            score = 0;
-            currentRound = 0;
-            showScreen('game-screen');
-            loadQuestion();
-        }
-
-        function loadQuestion() {
-            if (currentRound >= 5) {
-                // 關卡結束檢查
-                if (score >= 4) {
-                    if (currentLevel < 3) {
-                        currentLevel++;
-                        alert(`🎉 太棒了！晉級 Level ${currentLevel}！`);
-                        startLevel();
-                    } else {
-                        alert("🏆 恭喜！你完成了所有關卡！你是超級小學霸！");
-                        goHome();
-                    }
-                } else {
-                    alert("💪 加油，再試一次這個關卡！");
-                    startLevel(); // 重玩本關
-                }
-                return;
-            }
-
-            currentRound++;
-            const levelKey = `L${currentLevel}`;
-            const config = DB[gameSubject][levelKey];
-            
-            document.getElementById('game-title').innerText = `${gameSubject === 'ENGLISH' ? '英文' : '數學'} - ${config.title}`;
-            document.getElementById('level-indicator').innerText = `第 ${currentRound} / 5 題 (累積 ${score} 分)`;
-            document.getElementById('feedback').innerText = "";
-
-            // 根據類型產生題目
-            if (gameSubject === 'ENGLISH') generateEnglishQuestion(config.type);
-            else generateMathQuestion(config.type);
-        }
-
-        // --- 英文題目生成 ---
-        function generateEnglishQuestion(type) {
-            let options = [];
-            
-            if (type === 'alphabet') {
-                targetAnswer = alphabet[Math.floor(Math.random() * 26)];
-                document.getElementById('question-text').innerText = "🔊 請聽聲音，選出正確字母";
-                // 選項邏輯
-                let set = new Set([targetAnswer]);
-                while(set.size < 4) set.add(alphabet[Math.floor(Math.random() * 26)]);
-                options = Array.from(set).sort();
-                speak(targetAnswer);
-            
-            } else if (type === 'cvc' || type === 'sight') {
-                const source = type === 'cvc' ? WORDS.CVC : WORDS.SIGHT;
-                targetAnswer = source[Math.floor(Math.random() * source.length)];
-                document.getElementById('question-text').innerText = `🔊 請找出單字: "${targetAnswer}"`;
-                
-                let set = new Set([targetAnswer]);
-                while(set.size < 4) set.add(source[Math.floor(Math.random() * source.length)]);
-                options = Array.from(set).sort(() => Math.random() - 0.5);
-                setTimeout(() => speak(targetAnswer), 500);
-            }
-
-            renderOptions(options);
-        }
-
-        // --- 數學題目生成 ---
-        function generateMathQuestion(type) {
-            let options = [];
-            
-            if (type === 'compare') {
-                let n1 = Math.floor(Math.random() * 50) + 1;
-                let n2 = Math.floor(Math.random() * 50) + 1;
-                while(n1 === n2) n2 = Math.floor(Math.random() * 50) + 1;
-                
-                let isMax = Math.random() > 0.5;
-                targetAnswer = isMax ? Math.max(n1, n2) : Math.min(n1, n2);
-                document.getElementById('question-text').innerText = `哪一個數字比較【${isMax ? '大' : '小'}】？`;
-                options = [n1, n2];
-            
-            } else if (type === 'add') {
-                let n1 = Math.floor(Math.random() * 10) + 1;
-                let n2 = Math.floor(Math.random() * 10) + 1;
-                targetAnswer = n1 + n2;
-                document.getElementById('question-text').innerText = `${n1} + ${n2} = ?`;
-                
-                let set = new Set([targetAnswer]);
-                while(set.size < 3) set.add(targetAnswer + Math.floor(Math.random()*5) * (Math.random()>0.5?1:-1));
-                options = Array.from(set).filter(n=>n>0).sort((a,b)=>a-b);
-            
-            } else if (type === 'sub') {
-                let n1 = Math.floor(Math.random() * 10) + 5;
-                let n2 = Math.floor(Math.random() * n1);
-                targetAnswer = n1 - n2;
-                document.getElementById('question-text').innerText = `${n1} - ${n2} = ?`;
-                
-                let set = new Set([targetAnswer]);
-                while(set.size < 3) set.add(Math.abs(targetAnswer + Math.floor(Math.random()*3) * (Math.random()>0.5?1:-1)));
-                options = Array.from(set).sort((a,b)=>a-b);
-            }
-
-            renderOptions(options);
-        }
-
-        function renderOptions(arr) {
-            const area = document.getElementById('options-area');
-            area.innerHTML = '';
-            arr.forEach(opt => {
-                const btn = document.createElement('button');
-                btn.className = 'option-btn';
-                btn.innerText = opt;
-                btn.onclick = () => checkAnswer(opt, btn);
-                area.appendChild(btn);
-            });
-        }
-
-        function checkAnswer(val, btn) {
-            // 鎖定按鈕
-            document.querySelectorAll('.option-btn').forEach(b => b.onclick = null);
-            
-            if (val == targetAnswer) {
-                btn.classList.add('correct');
-                document.getElementById('feedback').innerText = "Correct! 答對了！🌟";
-                document.getElementById('feedback').style.color = "green";
-                speak("Good job");
-                score++;
-            } else {
-                btn.classList.add('incorrect');
-                document.getElementById('feedback').innerText = `答案是 ${targetAnswer}`;
-                document.getElementById('feedback').style.color = "red";
-                speak("Try again");
-                // 顯示正確答案
-                document.querySelectorAll('.option-btn').forEach(b => {
-                    if(b.innerText == targetAnswer) b.classList.add('correct');
-                });
-            }
-
-            setTimeout(loadQuestion, 2000);
-        }
-
-        // ==========================================
-        // Part B: 練字板邏輯 (Canvas & Touch)
-        // ==========================================
-
-        function startWriting() {
-            showScreen('writing-screen');
-            currentLetterIndex = 0;
-            isUpperCase = true;
-            initCanvas();
-            drawTemplate();
-        }
-
-        function initCanvas() {
-            canvas = document.getElementById('writeCanvas');
-            ctx = canvas.getContext('2d');
-            
-            // 設置繪圖屬性
-            ctx.lineCap = 'round';
-            ctx.lineJoin = 'round';
-            ctx.lineWidth = 15; // 筆觸粗細
-            ctx.strokeStyle = '#333'; // 筆跡顏色
-
-            // 事件監聽 (滑鼠 + 觸控)
-            canvas.addEventListener('mousedown', startDraw);
-            canvas.addEventListener('mousemove', draw);
-            canvas.addEventListener('mouseup', endDraw);
-            canvas.addEventListener('mouseout', endDraw);
-
-            canvas.addEventListener('touchstart', (e) => {
-                e.preventDefault(); // 防止滾動
-                const touch = e.touches[0];
-                const mouseEvent = new MouseEvent("mousedown", {
-                    clientX: touch.clientX,
-                    clientY: touch.clientY
-                });
-                canvas.dispatchEvent(mouseEvent);
-            }, {passive: false});
-
-            canvas.addEventListener('touchmove', (e) => {
-                e.preventDefault();
-                const touch = e.touches[0];
-                const mouseEvent = new MouseEvent("mousemove", {
-                    clientX: touch.clientX,
-                    clientY: touch.clientY
-                });
-                canvas.dispatchEvent(mouseEvent);
-            }, {passive: false});
-
-            canvas.addEventListener('touchend', (e) => {
-                const mouseEvent = new MouseEvent("mouseup", {});
-                canvas.dispatchEvent(mouseEvent);
-            });
-        }
-
-        function getPos(canvas, evt) {
-            const rect = canvas.getBoundingClientRect();
-            return {
-                x: evt.clientX - rect.left,
-                y: evt.clientY - rect.top
-            };
-        }
-
-        function startDraw(e) {
-            isDrawing = true;
-            const pos = getPos(canvas, e);
-            ctx.beginPath();
-            ctx.moveTo(pos.x, pos.y);
-        }
-
-        function draw(e) {
-            if (!isDrawing) return;
-            const pos = getPos(canvas, e);
-            ctx.lineTo(pos.x, pos.y);
-            ctx.stroke();
-        }
-
-        function endDraw() {
-            isDrawing = false;
-        }
-
-        // 繪製背景字母 (描紅範本)
-        function drawTemplate() {
-            // 清空畫布
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            let letter = alphabet[currentLetterIndex];
-            if (!isUpperCase) letter = letter.toLowerCase();
-
-            document.getElementById('writing-title').innerText = `練習寫: ${letter}`;
-
-            // 繪製淺灰色範本
-            ctx.save();
-            ctx.font = "200px Arial"; // 字體大小
-            ctx.textAlign = "center";
-            ctx.textBaseline = "middle";
-            ctx.fillStyle = "#e0e0e0"; // 淺灰色
-            ctx.fillText(letter, canvas.width/2, canvas.height/2 + 20);
-            
-            // 繪製格線 (輔助線)
-            ctx.strokeStyle = "#ffe0b2";
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.moveTo(0, canvas.height/2);
-            ctx.lineTo(canvas.width, canvas.height/2); // 中線
-            ctx.moveTo(canvas.width/2, 0);
-            ctx.lineTo(canvas.width/2, canvas.height); // 垂直線
-            ctx.stroke();
-            
-            ctx.restore(); // 恢復筆刷設定
-        }
-
-        function clearCanvas() {
-            drawTemplate(); // 重新繪製範本就是清除筆跡
-        }
-
-        function nextLetter() {
-            if (currentLetterIndex < 25) {
-                currentLetterIndex++;
-                drawTemplate();
-            }
-        }
-
-        function prevLetter() {
-            if (currentLetterIndex > 0) {
-                currentLetterIndex--;
-                drawTemplate();
-            }
-        }
-
-        function toggleCase() {
-            isUpperCase = !isUpperCase;
-            drawTemplate();
-        }
-
-    </script>
 </body>
 </html>
