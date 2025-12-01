@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>數學挑戰</title>
+    <style>
+        body { font-family: sans-serif; background-color: #fff3e0; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .container { width: 90%; max-width: 800px; background: white; padding: 20px; border-radius: 20px; text-align: center; border: 5px solid #d84315; }
+        .back-btn { display: inline-block; padding: 10px 20px; background: #b0bec5; color: white; text-decoration: none; border-radius: 10px; margin-bottom: 20px; font-weight: bold; }
+        h2 { color: #bf360c; }
+        .option-btn { width: 30%; padding: 20px; margin: 10px; font-size: 2.5em; border-radius: 15px; border: 3px solid #ccc; background: #fffde7; cursor: pointer; }
+        .correct { background: #b2dfdb !important; border-color: #009688 !important; }
+        .incorrect { background: #ffcdd2 !important; border-color: #e57373 !important; }
+        #question-text { font-size: 2em; margin: 20px 0; color: #e65100; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" class="back-btn">🏠 回首頁</a>
+        <h2 id="level-title">Level 1</h2>
+        <div id="score-board">分數: 0</div>
+        <div id="question-text">題目載入中...</div>
+        <div id="options-area"></div>
+        <div id="feedback" style="height:30px; font-size:1.5em; font-weight:bold; margin-top:10px;"></div>
+    </div>
+
+    <script>
+        const LEVELS = {
+            1: { type: 'compare', title: 'Level 1: 比大小' },
+            2: { type: 'add', title: 'Level 2: 簡單加法' },
+            3: { type: 'sub', title: 'Level 3: 簡單減法' }
+        };
+
+        let currentLevel = 1;
+        let score = 0;
+        let round = 0;
+        let target = 0;
+
+        function init() { currentLevel = 1; startLevel(); }
+
+        function startLevel() {
+            score = 0; round = 0;
+            document.getElementById('level-title').innerText = LEVELS[currentLevel].title;
+            nextQuestion();
+        }
+
+        function nextQuestion() {
+            if (round >= 5) {
+                if (score >= 4) {
+                    if (currentLevel < 3) {
+                        alert("🎉 晉級下一關！"); currentLevel++; startLevel();
+                    } else {
+                        alert("🏆 數學小天才！恭喜通關！"); location.href = 'index.html';
+                    }
+                } else {
+                    alert("加油，再算一次！"); startLevel();
+                }
+                return;
+            }
+            round++;
+            document.getElementById('score-board').innerText = `題數: ${round}/5 (得分: ${score})`;
+            document.getElementById('feedback').innerText = '';
+            
+            const type = LEVELS[currentLevel].type;
+            let options = [];
+
+            if (type === 'compare') {
+                let n1 = r(50), n2 = r(50);
+                while(n1 === n2) n2 = r(50);
+                let isMax = Math.random() > 0.5;
+                target = isMax ? Math.max(n1, n2) : Math.min(n1, n2);
+                document.getElementById('question-text').innerText = `哪一個比較【${isMax?'大':'小'}】？`;
+                options = [n1, n2];
+            } else if (type === 'add') {
+                let n1 = r(10), n2 = r(10);
+                target = n1 + n2;
+                document.getElementById('question-text').innerText = `${n1} + ${n2} = ?`;
+                let set = new Set([target]);
+                while(set.size < 3) set.add(target + (Math.random()>0.5?1:-1)*r(3));
+                options = Array.from(set).sort((a,b)=>a-b);
+            } else {
+                let n1 = r(10)+5, n2 = Math.floor(Math.random()*n1);
+                target = n1 - n2;
+                document.getElementById('question-text').innerText = `${n1} - ${n2} = ?`;
+                let set = new Set([target]);
+                while(set.size < 3) set.add(Math.abs(target + (Math.random()>0.5?1:-1)*r(3)));
+                options = Array.from(set).sort((a,b)=>a-b);
+            }
+            renderOptions(options);
+        }
+
+        function r(max) { return Math.floor(Math.random() * max) + 1; }
+
+        function renderOptions(arr) {
+            const div = document.getElementById('options-area');
+            div.innerHTML = '';
+            arr.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn';
+                btn.innerText = opt;
+                btn.onclick = () => check(opt, btn);
+                div.appendChild(btn);
+            });
+        }
+
+        function check(ans, btn) {
+            document.querySelectorAll('.option-btn').forEach(b => b.onclick = null);
+            if (ans == target) {
+                btn.classList.add('correct');
+                document.getElementById('feedback').innerText = "✅ 答對了！";
+                document.getElementById('feedback').style.color = "green";
+                score++;
+            } else {
+                btn.classList.add('incorrect');
+                document.getElementById('feedback').innerText = `❌ 答案是 ${target}`;
+                document.getElementById('feedback').style.color = "red";
+            }
+            setTimeout(nextQuestion, 1500);
+        }
+
+        init();
+    </script>
+</body>
+</html>

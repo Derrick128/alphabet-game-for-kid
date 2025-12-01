@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>英文挑戰</title>
+    <style>
+        /* 樣式與之前類似，省略重複部分以節省篇幅，保持核心美觀 */
+        body { font-family: sans-serif; background-color: #e1f5fe; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .container { width: 90%; max-width: 800px; background: white; padding: 20px; border-radius: 20px; text-align: center; border: 5px solid #0288d1; }
+        .back-btn { display: inline-block; padding: 10px 20px; background: #b0bec5; color: white; text-decoration: none; border-radius: 10px; margin-bottom: 20px; font-weight: bold; }
+        h2 { color: #0277bd; }
+        .option-btn { width: 45%; padding: 20px; margin: 10px; font-size: 2em; border-radius: 15px; border: 3px solid #ccc; background: white; cursor: pointer; }
+        .correct { background: #b2dfdb !important; border-color: #009688 !important; }
+        .incorrect { background: #ffcdd2 !important; border-color: #e57373 !important; }
+        #question-text { font-size: 1.8em; margin: 20px 0; color: #01579b; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" class="back-btn">🏠 回首頁</a>
+        <h2 id="level-title">Level 1</h2>
+        <div id="score-board">分數: 0</div>
+        <div id="question-text">題目載入中...</div>
+        <div id="options-area"></div>
+        <div id="feedback" style="height:30px; font-size:1.5em; font-weight:bold; margin-top:10px;"></div>
+    </div>
+
+    <script>
+        const LEVELS = {
+            1: { type: 'alphabet', title: 'Level 1: 字母聽力' },
+            2: { type: 'cvc', title: 'Level 2: 單字拼讀' },
+            3: { type: 'sight', title: 'Level 3: 常見字' }
+        };
+        const DATA = {
+            CVC: ['cat', 'dog', 'pig', 'box', 'hat', 'sun', 'bus', 'red', 'six', 'fox'],
+            SIGHT: ['the', 'and', 'you', 'is', 'play', 'see', 'look', 'big', 'my', 'to'],
+            ALPHABET: "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split('')
+        };
+
+        let currentLevel = 1;
+        let score = 0;
+        let round = 0;
+        let target = '';
+
+        function init() {
+            currentLevel = 1;
+            startLevel();
+        }
+
+        function startLevel() {
+            score = 0;
+            round = 0;
+            document.getElementById('level-title').innerText = LEVELS[currentLevel].title;
+            nextQuestion();
+        }
+
+        function nextQuestion() {
+            if (round >= 5) {
+                if (score >= 4) {
+                    if (currentLevel < 3) {
+                        alert("🎉 晉級下一關！");
+                        currentLevel++;
+                        startLevel();
+                    } else {
+                        alert("🏆 恭喜通關！");
+                        location.href = 'index.html';
+                    }
+                } else {
+                    alert("再試一次吧！");
+                    startLevel();
+                }
+                return;
+            }
+            round++;
+            document.getElementById('score-board').innerText = `題數: ${round}/5 (得分: ${score})`;
+            document.getElementById('feedback').innerText = '';
+            
+            const type = LEVELS[currentLevel].type;
+            let options = [];
+
+            if (type === 'alphabet') {
+                target = DATA.ALPHABET[Math.floor(Math.random() * 26)];
+                document.getElementById('question-text').innerText = "🔊 請聽發音選字母";
+                speak(target);
+                let set = new Set([target]);
+                while(set.size < 4) set.add(DATA.ALPHABET[Math.floor(Math.random()*26)]);
+                options = Array.from(set).sort();
+            } else {
+                const src = type === 'cvc' ? DATA.CVC : DATA.SIGHT;
+                target = src[Math.floor(Math.random() * src.length)];
+                document.getElementById('question-text').innerText = `🔊 找出單字: "${target}"`;
+                setTimeout(() => speak(target), 500);
+                let set = new Set([target]);
+                while(set.size < 4) set.add(src[Math.floor(Math.random()*src.length)]);
+                options = Array.from(set).sort(() => Math.random() - 0.5);
+            }
+            
+            renderOptions(options);
+        }
+
+        function renderOptions(arr) {
+            const div = document.getElementById('options-area');
+            div.innerHTML = '';
+            arr.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn';
+                btn.innerText = opt;
+                btn.onclick = () => check(opt, btn);
+                div.appendChild(btn);
+            });
+        }
+
+        function check(ans, btn) {
+            document.querySelectorAll('.option-btn').forEach(b => b.onclick = null);
+            if (ans === target) {
+                btn.classList.add('correct');
+                document.getElementById('feedback').innerText = "✅ 答對了！";
+                document.getElementById('feedback').style.color = "green";
+                speak("Good job");
+                score++;
+            } else {
+                btn.classList.add('incorrect');
+                document.getElementById('feedback').innerText = `❌ 答案是 ${target}`;
+                document.getElementById('feedback').style.color = "red";
+                document.querySelectorAll('.option-btn').forEach(b => {
+                    if(b.innerText === target) b.classList.add('correct');
+                });
+            }
+            setTimeout(nextQuestion, 2000);
+        }
+
+        function speak(txt) {
+            const u = new SpeechSynthesisUtterance(txt);
+            u.lang = 'en-US';
+            window.speechSynthesis.speak(u);
+        }
+
+        init();
+    </script>
+</body>
+</html>
