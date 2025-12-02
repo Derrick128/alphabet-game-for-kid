@@ -2,139 +2,234 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>英文挑戰</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>英文挑戰 - 填空練習</title>
     <style>
-        /* 樣式與之前類似，省略重複部分以節省篇幅，保持核心美觀 */
-        body { font-family: sans-serif; background-color: #e1f5fe; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
-        .container { width: 90%; max-width: 800px; background: white; padding: 20px; border-radius: 20px; text-align: center; border: 5px solid #0288d1; }
-        .back-btn { display: inline-block; padding: 10px 20px; background: #b0bec5; color: white; text-decoration: none; border-radius: 10px; margin-bottom: 20px; font-weight: bold; }
-        h2 { color: #0277bd; }
-        .option-btn { width: 45%; padding: 20px; margin: 10px; font-size: 2em; border-radius: 15px; border: 3px solid #ccc; background: white; cursor: pointer; }
-        .correct { background: #b2dfdb !important; border-color: #009688 !important; }
-        .incorrect { background: #ffcdd2 !important; border-color: #e57373 !important; }
-        #question-text { font-size: 1.8em; margin: 20px 0; color: #01579b; font-weight: bold; }
+        body { font-family: 'Arial Rounded MT Bold', sans-serif; background-color: #e1f5fe; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; touch-action: none; }
+        .container { width: 90%; max-width: 500px; background: white; padding: 20px; border-radius: 20px; text-align: center; border: 5px solid #0288d1; box-sizing: border-box; }
+        .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .back-btn { padding: 5px 15px; background: #b0bec5; color: white; text-decoration: none; border-radius: 8px; font-weight: bold; }
+        
+        /* 題目區塊 */
+        #question-box { margin: 10px 0; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+        
+        /* 填空題顯示樣式 */
+        #puzzle-display { 
+            font-size: 3.5em; 
+            color: #333; 
+            letter-spacing: 5px; 
+            font-family: 'Courier New', monospace; /* 等寬字體讓底線比較清楚 */
+            font-weight: bold;
+            background: #e0f7fa;
+            padding: 10px 30px;
+            border-radius: 15px;
+            border: 2px dashed #0288d1;
+        }
+
+        .missing-char { color: #f44336; text-decoration: underline; }
+
+        #hint-text { color: #0277bd; font-size: 1.2em; }
+        
+        /* 畫布 */
+        #canvas-wrapper { position: relative; width: 100%; height: 200px; border: 4px dashed #81d4fa; border-radius: 15px; margin-bottom: 10px; background: #fff; cursor: crosshair; }
+        canvas { width: 100%; height: 100%; touch-action: none; border-radius: 10px; }
+        
+        /* 答案區 */
+        #answer-reveal { display: none; margin: 10px 0; padding: 15px; background: #fff9c4; border-radius: 10px; border: 2px solid #fbc02d; }
+        .correct-ans { font-size: 2.5em; color: #2e7d32; font-weight: bold; margin-top: 5px; display: block; }
+
+        /* 按鈕 */
+        .btn-group { display: flex; gap: 10px; justify-content: center; margin-top: 10px; }
+        .btn { padding: 12px 10px; font-size: 1.2em; border: none; border-radius: 10px; color: white; cursor: pointer; flex: 1; box-shadow: 0 4px 0 rgba(0,0,0,0.2); }
+        .btn:active { transform: translateY(3px); box-shadow: none; }
+        
+        .btn-audio { background: #29b6f6; border-radius: 50%; width: 60px; height: 60px; flex: none; display: flex; align-items: center; justify-content: center; font-size: 2em; box-shadow: 0 4px 0 #0288d1; cursor: pointer; }
+        .btn-audio:active { transform: scale(0.95); box-shadow: 0 2px 0 #0288d1; }
+
+        .btn-show { background: #039be5; }
+        .btn-yes { background: #4caf50; display: none; }
+        .btn-no { background: #f44336; display: none; }
+        .btn-clear { background: #90a4ae; flex: 0.5; font-size: 1em; }
     </style>
 </head>
 <body>
     <div class="container">
-        <a href="index.html" class="back-btn">🏠 回首頁</a>
-        <h2 id="level-title">Level 1</h2>
-        <div id="score-board">分數: 0</div>
-        <div id="question-text">題目載入中...</div>
-        <div id="options-area"></div>
-        <div id="feedback" style="height:30px; font-size:1.5em; font-weight:bold; margin-top:10px;"></div>
+        <div class="top-bar">
+            <a href="index.html" class="back-btn">🏠</a>
+            <div id="level-title" style="color:#01579b; font-weight:bold;">Level 1</div>
+            <div id="score-board" style="color:#555;">0/5</div>
+        </div>
+
+        <div id="question-box">
+            <div id="puzzle-display">_at</div>
+            <div style="display:flex; align-items:center; gap:10px;">
+                <div class="btn-audio" onclick="playAudio()">🔊</div>
+                <span id="hint-text">聽聽看，填入缺少的字母</span>
+            </div>
+        </div>
+
+        <div id="canvas-wrapper">
+            <canvas id="writeCanvas"></canvas>
+            <div style="position: absolute; bottom: 5px; right: 5px; color: #ccc; font-size: 0.8em;">在此寫下字母</div>
+        </div>
+
+        <div id="answer-reveal">
+            完整單字是：
+            <span class="correct-ans" id="correct-text"></span>
+            <div>你寫對了嗎？</div>
+        </div>
+
+        <div class="btn-group">
+            <button class="btn btn-clear" onclick="clearCanvas()">橡皮擦</button>
+            <button id="btn-show" class="btn btn-show" onclick="showAnswer()">看答案</button>
+            <button id="btn-yes" class="btn btn-yes" onclick="judge(true)">⭕ 答對</button>
+            <button id="btn-no" class="btn btn-no" onclick="judge(false)">❌ 答錯</button>
+        </div>
     </div>
 
     <script>
-        const LEVELS = {
-            1: { type: 'alphabet', title: 'Level 1: 字母聽力' },
-            2: { type: 'cvc', title: 'Level 2: 單字拼讀' },
-            3: { type: 'sight', title: 'Level 3: 常見字' }
-        };
+        // 適合 5 歲的單字庫 (CVC words 為主)
         const DATA = {
-            CVC: ['cat', 'dog', 'pig', 'box', 'hat', 'sun', 'bus', 'red', 'six', 'fox'],
-            SIGHT: ['the', 'and', 'you', 'is', 'play', 'see', 'look', 'big', 'my', 'to'],
-            ALPHABET: "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split('')
+            1: ['cat', 'dog', 'pig', 'bus', 'map', 'sun', 'box', 'hat', 'net', 'six'], // L1: 簡單名詞
+            2: ['red', 'big', 'hot', 'run', 'sad', 'wet', 'fox', 'pen', 'mom', 'dad'], // L2: 形容詞/動詞/人物
+            3: ['cake', 'bike', 'kite', 'rose', 'cute', 'duck', 'fish', 'ship', 'king', 'book'] // L3: Magic E & 混合音
+        };
+        const TITLES = { 
+            1: "L1: 字首聽音 (Initial)", 
+            2: "L2: 母音聽辨 (Vowel)", 
+            3: "L3: 進階挑戰 (Challenge)" 
         };
 
-        let currentLevel = 1;
-        let score = 0;
-        let round = 0;
-        let target = '';
+        let currentLevel = 1, score = 0, round = 0, currentWord = "";
+        let missingIndex = 0; // 紀錄挖空的是第幾個字
+        
+        const canvas = document.getElementById('writeCanvas');
+        const ctx = canvas.getContext('2d');
+        let isDrawing = false;
 
         function init() {
-            currentLevel = 1;
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
+            setupCanvas();
             startLevel();
         }
 
+        function resizeCanvas() {
+            canvas.width = canvas.parentElement.clientWidth;
+            canvas.height = canvas.parentElement.clientHeight;
+            ctx.lineWidth = 5; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.strokeStyle = '#333';
+        }
+
         function startLevel() {
-            score = 0;
-            round = 0;
-            document.getElementById('level-title').innerText = LEVELS[currentLevel].title;
+            score = 0; round = 0;
+            document.getElementById('level-title').innerText = TITLES[currentLevel];
             nextQuestion();
+        }
+
+        function generatePuzzle(word) {
+            // 根據 Level 決定挖空邏輯
+            let displayChars = word.split('');
+            
+            if (currentLevel === 1) {
+                // Level 1: 挖掉第一個字 (字首) _at
+                missingIndex = 0;
+            } else if (currentLevel === 2) {
+                // Level 2: 挖掉中間的母音 (通常是第2個字) c_t
+                missingIndex = 1; 
+            } else {
+                // Level 3: 隨機挖一個，或者是字尾
+                missingIndex = Math.floor(Math.random() * word.length);
+            }
+            
+            displayChars[missingIndex] = '_';
+            return displayChars.join(' '); // 加空格讓字母分開一點: c _ t
         }
 
         function nextQuestion() {
             if (round >= 5) {
                 if (score >= 4) {
                     if (currentLevel < 3) {
-                        alert("🎉 晉級下一關！");
-                        currentLevel++;
-                        startLevel();
+                        alert(`🎉 答對 ${score} 題！太棒了！晉級下一關！`); currentLevel++; startLevel();
                     } else {
-                        alert("🏆 恭喜通關！");
-                        location.href = 'index.html';
+                        alert("🏆 恭喜！你完成了所有填空挑戰！"); location.href = 'index.html';
                     }
                 } else {
-                    alert("再試一次吧！");
-                    startLevel();
+                    alert("加油！再試一次！"); startLevel();
                 }
                 return;
             }
             round++;
             document.getElementById('score-board').innerText = `題數: ${round}/5 (得分: ${score})`;
-            document.getElementById('feedback').innerText = '';
             
-            const type = LEVELS[currentLevel].type;
-            let options = [];
-
-            if (type === 'alphabet') {
-                target = DATA.ALPHABET[Math.floor(Math.random() * 26)];
-                document.getElementById('question-text').innerText = "🔊 請聽發音選字母";
-                speak(target);
-                let set = new Set([target]);
-                while(set.size < 4) set.add(DATA.ALPHABET[Math.floor(Math.random()*26)]);
-                options = Array.from(set).sort();
-            } else {
-                const src = type === 'cvc' ? DATA.CVC : DATA.SIGHT;
-                target = src[Math.floor(Math.random() * src.length)];
-                document.getElementById('question-text').innerText = `🔊 找出單字: "${target}"`;
-                setTimeout(() => speak(target), 500);
-                let set = new Set([target]);
-                while(set.size < 4) set.add(src[Math.floor(Math.random()*src.length)]);
-                options = Array.from(set).sort(() => Math.random() - 0.5);
-            }
+            // 隨機選字
+            const wordList = DATA[currentLevel];
+            currentWord = wordList[Math.floor(Math.random() * wordList.length)];
             
-            renderOptions(options);
+            // 產生挖空題目
+            const puzzleText = generatePuzzle(currentWord);
+            document.getElementById('puzzle-display').innerText = puzzleText;
+
+            // 重置介面
+            clearCanvas();
+            document.getElementById('answer-reveal').style.display = 'none';
+            document.getElementById('btn-show').style.display = 'block';
+            document.getElementById('btn-yes').style.display = 'none';
+            document.getElementById('btn-no').style.display = 'none';
+            document.querySelector('.btn-clear').style.display = 'block';
+            
+            // 自動播放
+            setTimeout(playAudio, 500);
         }
 
-        function renderOptions(arr) {
-            const div = document.getElementById('options-area');
-            div.innerHTML = '';
-            arr.forEach(opt => {
-                const btn = document.createElement('button');
-                btn.className = 'option-btn';
-                btn.innerText = opt;
-                btn.onclick = () => check(opt, btn);
-                div.appendChild(btn);
-            });
-        }
-
-        function check(ans, btn) {
-            document.querySelectorAll('.option-btn').forEach(b => b.onclick = null);
-            if (ans === target) {
-                btn.classList.add('correct');
-                document.getElementById('feedback').innerText = "✅ 答對了！";
-                document.getElementById('feedback').style.color = "green";
-                speak("Good job");
-                score++;
-            } else {
-                btn.classList.add('incorrect');
-                document.getElementById('feedback').innerText = `❌ 答案是 ${target}`;
-                document.getElementById('feedback').style.color = "red";
-                document.querySelectorAll('.option-btn').forEach(b => {
-                    if(b.innerText === target) b.classList.add('correct');
-                });
-            }
-            setTimeout(nextQuestion, 2000);
-        }
-
-        function speak(txt) {
-            const u = new SpeechSynthesisUtterance(txt);
+        function playAudio() {
+            const u = new SpeechSynthesisUtterance(currentWord);
             u.lang = 'en-US';
+            u.rate = 0.8; 
             window.speechSynthesis.speak(u);
         }
+
+        function showAnswer() {
+            // 顯示正確答案，並把缺少的字標紅
+            let html = "";
+            const chars = currentWord.split('');
+            chars.forEach((char, index) => {
+                if (index === missingIndex) {
+                    html += `<span style="color:#f44336; text-decoration:underline;">${char}</span>`;
+                } else {
+                    html += char;
+                }
+            });
+
+            document.getElementById('correct-text').innerHTML = html;
+            document.getElementById('answer-reveal').style.display = 'block';
+            playAudio();
+            
+            document.getElementById('btn-show').style.display = 'none';
+            document.querySelector('.btn-clear').style.display = 'none';
+            document.getElementById('btn-yes').style.display = 'block';
+            document.getElementById('btn-no').style.display = 'block';
+        }
+
+        function judge(isCorrect) {
+            if(isCorrect) score++;
+            nextQuestion();
+        }
+
+        function setupCanvas() {
+            const start = (e) => { e.preventDefault(); isDrawing = true; ctx.beginPath(); const {x,y} = pos(e); ctx.moveTo(x,y); };
+            const move = (e) => { if(!isDrawing) return; e.preventDefault(); const {x,y} = pos(e); ctx.lineTo(x,y); ctx.stroke(); };
+            const end = () => isDrawing = false;
+            canvas.addEventListener('mousedown', start); canvas.addEventListener('mousemove', move);
+            canvas.addEventListener('mouseup', end); canvas.addEventListener('touchstart', start, {passive:false});
+            canvas.addEventListener('touchmove', move, {passive:false}); canvas.addEventListener('touchend', end);
+        }
+        function pos(e) {
+            const r = canvas.getBoundingClientRect();
+            const cx = e.touches ? e.touches[0].clientX : e.clientX;
+            const cy = e.touches ? e.touches[0].clientY : e.clientY;
+            return { x: cx - r.left, y: cy - r.top };
+        }
+        function clearCanvas() { ctx.clearRect(0, 0, canvas.width, canvas.height); }
 
         init();
     </script>
