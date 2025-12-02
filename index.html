@@ -3,89 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>全能小學霸 - 首頁</title>
+    <title>全能小學霸 - 進階挑戰</title>
     <style>
-        body {
-            font-family: 'Arial Rounded MT Bold', 'Microsoft JhengHei', sans-serif;
-            margin: 0;
-            background-color: #f0f4c3; /* 柔和背景 */
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-        }
-        .container {
-            width: 85%;
-            /* 修改處：縮小最大寬度，讓整體看起來更修長，不像截圖那麼寬扁 */
-            max-width: 400px; 
-            background-color: white;
-            border-radius: 30px;
-            padding: 40px 25px;
-            text-align: center;
-            border: 6px solid #cddc39;
-            box-shadow: 0 15px 30px rgba(0,0,0,0.15);
-        }
-        h1 { 
-            color: #827717; 
-            font-size: 2.2em; 
-            margin-bottom: 40px; 
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-        }
-        
-        /* 按鈕容器，確保按鈕置中 */
-        .menu-list {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-
-        .menu-btn {
-            display: block;
-            width: 100%;
-            padding: 20px 0; /* 增加高度 */
-            font-size: 1.5em;
-            border: none;
-            border-radius: 50px; /* 變成圓潤的膠囊狀 */
-            cursor: pointer;
-            color: white;
-            text-decoration: none;
-            box-shadow: 0 6px 0 rgba(0,0,0,0.2); /* 立體感陰影 */
-            transition: transform 0.1s, box-shadow 0.1s;
-            font-weight: bold;
-            box-sizing: border-box; /* 確保寬度計算包含 padding */
-        }
-
-        .menu-btn:active { 
-            transform: translateY(4px); 
-            box-shadow: 0 2px 0 rgba(0,0,0,0.2); 
-        }
-        
-        /* 顏色微調，更加鮮豔 */
+        body { font-family: 'Arial Rounded MT Bold', 'Microsoft JhengHei', sans-serif; margin: 0; background-color: #f0f4c3; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .container { width: 85%; max-width: 400px; background-color: white; border-radius: 30px; padding: 40px 25px; text-align: center; border: 6px solid #cddc39; box-shadow: 0 15px 30px rgba(0,0,0,0.15); }
+        h1 { color: #827717; font-size: 2.0em; margin-bottom: 30px; }
+        .menu-list { display: flex; flex-direction: column; gap: 20px; }
+        .menu-btn { display: block; width: 100%; padding: 20px 0; font-size: 1.5em; border: none; border-radius: 50px; cursor: pointer; color: white; text-decoration: none; box-shadow: 0 6px 0 rgba(0,0,0,0.2); transition: transform 0.1s; font-weight: bold; box-sizing: border-box; }
+        .menu-btn:active { transform: translateY(4px); box-shadow: 0 2px 0 rgba(0,0,0,0.2); }
         .btn-eng { background-color: #29b6f6; border: 3px solid #0288d1; }
         .btn-math { background-color: #ff7043; border: 3px solid #d84315; }
         .btn-write { background-color: #9ccc65; border: 3px solid #558b2f; }
-        
-        /* 讓 emoji 稍微大一點 */
         .icon { font-size: 1.2em; vertical-align: middle; margin-right: 8px; }
-
+        .tag { font-size: 0.6em; background: #fff; color: #555; padding: 2px 8px; border-radius: 10px; margin-left: 5px; vertical-align: middle; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🎒 快樂學習樂園</h1>
-        
+        <h1>🎒 小學霸進階班</h1>
         <div class="menu-list">
             <a href="english.html" class="menu-btn btn-eng">
-                <span class="icon">🔠</span>英文挑戰
+                <span class="icon">🔠</span>英文拼寫 <span class="tag">手寫版</span>
             </a>
             <a href="math.html" class="menu-btn btn-math">
-                <span class="icon">🧮</span>數學挑戰
+                <span class="icon">🧮</span>數學運算 <span class="tag">手寫版</span>
             </a>
             <a href="writing.html" class="menu-btn btn-write">
-                <span class="icon">✍️</span>練字評分
+                <span class="icon">✍️</span>字體練習
             </a>
         </div>
     </div>
