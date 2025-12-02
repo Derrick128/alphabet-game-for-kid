@@ -2,42 +2,110 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>數學挑戰</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>數學挑戰 - 手寫版</title>
     <style>
-        body { font-family: sans-serif; background-color: #fff3e0; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
-        .container { width: 90%; max-width: 800px; background: white; padding: 20px; border-radius: 20px; text-align: center; border: 5px solid #d84315; }
-        .back-btn { display: inline-block; padding: 10px 20px; background: #b0bec5; color: white; text-decoration: none; border-radius: 10px; margin-bottom: 20px; font-weight: bold; }
-        h2 { color: #bf360c; }
-        .option-btn { width: 30%; padding: 20px; margin: 10px; font-size: 2.5em; border-radius: 15px; border: 3px solid #ccc; background: #fffde7; cursor: pointer; }
-        .correct { background: #b2dfdb !important; border-color: #009688 !important; }
-        .incorrect { background: #ffcdd2 !important; border-color: #e57373 !important; }
-        #question-text { font-size: 2em; margin: 20px 0; color: #e65100; font-weight: bold; }
+        body { font-family: sans-serif; background-color: #fff3e0; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; touch-action: none; }
+        .container { width: 90%; max-width: 500px; background: white; padding: 20px; border-radius: 20px; text-align: center; border: 5px solid #d84315; box-sizing: border-box; }
+        .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .back-btn { padding: 5px 15px; background: #b0bec5; color: white; text-decoration: none; border-radius: 8px; font-weight: bold; }
+        
+        #question-box { font-size: 2.5em; margin: 10px 0; color: #e65100; font-weight: bold; min-height: 60px; }
+        
+        /* 手寫區域 */
+        #canvas-wrapper { position: relative; width: 100%; height: 250px; border: 4px dashed #ffab91; border-radius: 15px; margin-bottom: 10px; background: #fff; cursor: crosshair; }
+        canvas { width: 100%; height: 100%; touch-action: none; border-radius: 10px; }
+        
+        /* 答案顯示區 (預設隱藏) */
+        #answer-reveal { display: none; margin: 10px 0; padding: 10px; background: #fff8e1; border-radius: 10px; }
+        .correct-ans { font-size: 2em; color: #2e7d32; font-weight: bold; }
+
+        /* 按鈕群組 */
+        .btn-group { display: flex; gap: 10px; justify-content: center; margin-top: 10px; }
+        .btn { padding: 12px 20px; font-size: 1.2em; border: none; border-radius: 10px; color: white; cursor: pointer; flex: 1; box-shadow: 0 4px 0 rgba(0,0,0,0.2); }
+        .btn:active { transform: translateY(3px); box-shadow: none; }
+        
+        .btn-show { background: #ff9800; }
+        .btn-yes { background: #4caf50; display: none; }
+        .btn-no { background: #f44336; display: none; }
+        .btn-clear { background: #90a4ae; flex: 0.5; font-size: 1em; }
     </style>
 </head>
 <body>
     <div class="container">
-        <a href="index.html" class="back-btn">🏠 回首頁</a>
-        <h2 id="level-title">Level 1</h2>
-        <div id="score-board">分數: 0</div>
-        <div id="question-text">題目載入中...</div>
-        <div id="options-area"></div>
-        <div id="feedback" style="height:30px; font-size:1.5em; font-weight:bold; margin-top:10px;"></div>
+        <div class="top-bar">
+            <a href="index.html" class="back-btn">🏠</a>
+            <div id="level-title" style="color:#bf360c; font-weight:bold;">Level 1</div>
+            <div id="score-board" style="color:#555;">0/5</div>
+        </div>
+
+        <div id="question-box"></div>
+
+        <div id="canvas-wrapper">
+            <canvas id="writeCanvas"></canvas>
+            <div style="position: absolute; bottom: 5px; right: 5px; color: #ccc; font-size: 0.8em;">在此寫下答案</div>
+        </div>
+
+        <div id="answer-reveal">
+            正確答案是：<span class="correct-ans" id="correct-text"></span>
+            <div>你寫對了嗎？</div>
+        </div>
+
+        <div class="btn-group">
+            <button class="btn btn-clear" onclick="clearCanvas()">橡皮擦</button>
+            <button id="btn-show" class="btn btn-show" onclick="showAnswer()">看答案</button>
+            <button id="btn-yes" class="btn btn-yes" onclick="judge(true)">⭕ 答對</button>
+            <button id="btn-no" class="btn btn-no" onclick="judge(false)">❌ 答錯</button>
+        </div>
     </div>
 
     <script>
         const LEVELS = {
-            1: { type: 'compare', title: 'Level 1: 比大小' },
-            2: { type: 'add', title: 'Level 2: 簡單加法' },
-            3: { type: 'sub', title: 'Level 3: 簡單減法' }
+            1: { title: "L1: 進位加法", generate: () => { 
+                // 產生需要進位的加法 (個位數相加 > 10)
+                let a = r(15, 45); 
+                let b = r(5, 9); // 讓個位數容易進位
+                // 調整 b 確保個位數相加 > 10
+                while((a%10) + b < 10) b++;
+                return { q: `${a} + ${b} = ?`, a: a+b };
+            }},
+            2: { title: "L2: 退位減法", generate: () => {
+                // 產生需要退位的減法
+                let a = r(30, 60);
+                let b = r(5, 9);
+                // 確保個位數 a < b (需要借位)
+                while((a%10) >= b) a = r(30, 60); 
+                return { q: `${a} - ${b} = ?`, a: a-b };
+            }},
+            3: { title: "L3: 連續運算", generate: () => {
+                let a = r(10, 20);
+                let b = r(5, 10);
+                let c = r(2, 8);
+                let isAdd = Math.random() > 0.5;
+                if(isAdd) return { q: `${a} + ${b} - ${c} = ?`, a: a+b-c };
+                else return { q: `${a} - ${b} + ${c} = ?`, a: a-b+c };
+            }}
         };
 
-        let currentLevel = 1;
-        let score = 0;
-        let round = 0;
-        let target = 0;
+        let currentLevel = 1, score = 0, round = 0, currentAnswer = 0;
+        const canvas = document.getElementById('writeCanvas');
+        const ctx = canvas.getContext('2d');
+        let isDrawing = false;
 
-        function init() { currentLevel = 1; startLevel(); }
+        function init() {
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
+            setupCanvas();
+            startLevel();
+        }
+
+        function resizeCanvas() {
+            canvas.width = canvas.parentElement.clientWidth;
+            canvas.height = canvas.parentElement.clientHeight;
+            ctx.lineWidth = 5; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.strokeStyle = '#333';
+        }
+
+        function r(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
 
         function startLevel() {
             score = 0; round = 0;
@@ -49,75 +117,64 @@
             if (round >= 5) {
                 if (score >= 4) {
                     if (currentLevel < 3) {
-                        alert("🎉 晉級下一關！"); currentLevel++; startLevel();
+                        alert(`🎉 太強了！答對 ${score} 題，晉級下一關！`); currentLevel++; startLevel();
                     } else {
-                        alert("🏆 數學小天才！恭喜通關！"); location.href = 'index.html';
+                        alert("🏆 數學大師！全部通關！"); location.href = 'index.html';
                     }
                 } else {
-                    alert("加油，再算一次！"); startLevel();
+                    alert("再練習一次吧！加油！"); startLevel();
                 }
                 return;
             }
             round++;
             document.getElementById('score-board').innerText = `題數: ${round}/5 (得分: ${score})`;
-            document.getElementById('feedback').innerText = '';
             
-            const type = LEVELS[currentLevel].type;
-            let options = [];
+            // 重置介面
+            clearCanvas();
+            document.getElementById('answer-reveal').style.display = 'none';
+            document.getElementById('btn-show').style.display = 'block';
+            document.getElementById('btn-yes').style.display = 'none';
+            document.getElementById('btn-no').style.display = 'none';
+            document.querySelector('.btn-clear').style.display = 'block';
 
-            if (type === 'compare') {
-                let n1 = r(50), n2 = r(50);
-                while(n1 === n2) n2 = r(50);
-                let isMax = Math.random() > 0.5;
-                target = isMax ? Math.max(n1, n2) : Math.min(n1, n2);
-                document.getElementById('question-text').innerText = `哪一個比較【${isMax?'大':'小'}】？`;
-                options = [n1, n2];
-            } else if (type === 'add') {
-                let n1 = r(10), n2 = r(10);
-                target = n1 + n2;
-                document.getElementById('question-text').innerText = `${n1} + ${n2} = ?`;
-                let set = new Set([target]);
-                while(set.size < 3) set.add(target + (Math.random()>0.5?1:-1)*r(3));
-                options = Array.from(set).sort((a,b)=>a-b);
-            } else {
-                let n1 = r(10)+5, n2 = Math.floor(Math.random()*n1);
-                target = n1 - n2;
-                document.getElementById('question-text').innerText = `${n1} - ${n2} = ?`;
-                let set = new Set([target]);
-                while(set.size < 3) set.add(Math.abs(target + (Math.random()>0.5?1:-1)*r(3)));
-                options = Array.from(set).sort((a,b)=>a-b);
-            }
-            renderOptions(options);
+            // 出題
+            const qData = LEVELS[currentLevel].generate();
+            document.getElementById('question-box').innerText = qData.q;
+            currentAnswer = qData.a;
         }
 
-        function r(max) { return Math.floor(Math.random() * max) + 1; }
-
-        function renderOptions(arr) {
-            const div = document.getElementById('options-area');
-            div.innerHTML = '';
-            arr.forEach(opt => {
-                const btn = document.createElement('button');
-                btn.className = 'option-btn';
-                btn.innerText = opt;
-                btn.onclick = () => check(opt, btn);
-                div.appendChild(btn);
-            });
+        function showAnswer() {
+            document.getElementById('correct-text').innerText = currentAnswer;
+            document.getElementById('answer-reveal').style.display = 'block';
+            
+            // 切換按鈕
+            document.getElementById('btn-show').style.display = 'none';
+            document.querySelector('.btn-clear').style.display = 'none'; // 鎖定不能再改
+            document.getElementById('btn-yes').style.display = 'block';
+            document.getElementById('btn-no').style.display = 'block';
         }
 
-        function check(ans, btn) {
-            document.querySelectorAll('.option-btn').forEach(b => b.onclick = null);
-            if (ans == target) {
-                btn.classList.add('correct');
-                document.getElementById('feedback').innerText = "✅ 答對了！";
-                document.getElementById('feedback').style.color = "green";
-                score++;
-            } else {
-                btn.classList.add('incorrect');
-                document.getElementById('feedback').innerText = `❌ 答案是 ${target}`;
-                document.getElementById('feedback').style.color = "red";
-            }
-            setTimeout(nextQuestion, 1500);
+        function judge(isCorrect) {
+            if(isCorrect) score++;
+            nextQuestion();
         }
+
+        // 畫布邏輯
+        function setupCanvas() {
+            const start = (e) => { e.preventDefault(); isDrawing = true; ctx.beginPath(); const {x,y} = pos(e); ctx.moveTo(x,y); };
+            const move = (e) => { if(!isDrawing) return; e.preventDefault(); const {x,y} = pos(e); ctx.lineTo(x,y); ctx.stroke(); };
+            const end = () => isDrawing = false;
+            canvas.addEventListener('mousedown', start); canvas.addEventListener('mousemove', move);
+            canvas.addEventListener('mouseup', end); canvas.addEventListener('touchstart', start, {passive:false});
+            canvas.addEventListener('touchmove', move, {passive:false}); canvas.addEventListener('touchend', end);
+        }
+        function pos(e) {
+            const r = canvas.getBoundingClientRect();
+            const cx = e.touches ? e.touches[0].clientX : e.clientX;
+            const cy = e.touches ? e.touches[0].clientY : e.clientY;
+            return { x: cx - r.left, y: cy - r.top };
+        }
+        function clearCanvas() { ctx.clearRect(0, 0, canvas.width, canvas.height); }
 
         init();
     </script>
