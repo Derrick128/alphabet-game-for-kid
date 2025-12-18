@@ -2,36 +2,208 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>全能小學霸 - 進階挑戰</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>小小探險家 - 學習首頁</title>
     <style>
-        body { font-family: 'Arial Rounded MT Bold', 'Microsoft JhengHei', sans-serif; margin: 0; background-color: #f0f4c3; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-        .container { width: 85%; max-width: 400px; background-color: white; border-radius: 30px; padding: 40px 25px; text-align: center; border: 6px solid #cddc39; box-shadow: 0 15px 30px rgba(0,0,0,0.15); }
-        h1 { color: #827717; font-size: 2.0em; margin-bottom: 30px; }
-        .menu-list { display: flex; flex-direction: column; gap: 20px; }
-        .menu-btn { display: block; width: 100%; padding: 20px 0; font-size: 1.5em; border: none; border-radius: 50px; cursor: pointer; color: white; text-decoration: none; box-shadow: 0 6px 0 rgba(0,0,0,0.2); transition: transform 0.1s; font-weight: bold; box-sizing: border-box; }
-        .menu-btn:active { transform: translateY(4px); box-shadow: 0 2px 0 rgba(0,0,0,0.2); }
-        .btn-eng { background-color: #29b6f6; border: 3px solid #0288d1; }
-        .btn-math { background-color: #ff7043; border: 3px solid #d84315; }
-        .btn-write { background-color: #9ccc65; border: 3px solid #558b2f; }
-        .icon { font-size: 1.2em; vertical-align: middle; margin-right: 8px; }
-        .tag { font-size: 0.6em; background: #fff; color: #555; padding: 2px 8px; border-radius: 10px; margin-left: 5px; vertical-align: middle; }
+        /* --- 全局設定 --- */
+        :root {
+            --bg-color: #fdfbf7; /* 溫暖的米白色背景 */
+            --card-shadow: 0 10px 20px rgba(0,0,0,0.05);
+            --card-hover-shadow: 0 15px 25px rgba(0,0,0,0.1);
+            /* 主題色變數 */
+            --color-eng: #e3f2fd;  /* 淺藍 */
+            --color-eng-dark: #42a5f5;
+            --color-math: #fff3e0; /* 淺橘 */
+            --color-math-dark: #ff9800;
+            --color-write: #e8f5e9; /* 淺綠 */
+            --color-write-dark: #66bb6a;
+            --color-future: #f3e5f5; /* 淺紫 (預留) */
+        }
+
+        body {
+            font-family: 'Arial Rounded MT Bold', 'Microsoft JhengHei', sans-serif;
+            margin: 0;
+            background-color: var(--bg-color);
+            color: #444;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* --- 頭部歡迎區 --- */
+        header {
+            width: 100%;
+            padding: 40px 20px 20px;
+            text-align: center;
+            box-sizing: border-box;
+        }
+
+        .avatar {
+            font-size: 3.5rem;
+            margin-bottom: 10px;
+            display: inline-block;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 1.8rem;
+            color: #5d4037;
+        }
+
+        p {
+            margin: 5px 0 0;
+            color: #8d6e63;
+            font-size: 1rem;
+        }
+
+        /* --- 主內容：網格佈局 --- */
+        main {
+            width: 90%;
+            max-width: 600px; /* 平板寬度限制 */
+            display: grid;
+            /* 自動適應：手機一欄或兩欄，平板兩欄 */
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); 
+            gap: 20px;
+            padding-bottom: 40px;
+            box-sizing: border-box;
+        }
+
+        /* --- 卡片設計 --- */
+        .card {
+            background: white;
+            border-radius: 25px;
+            padding: 25px 15px;
+            text-align: center;
+            text-decoration: none;
+            color: inherit;
+            box-shadow: var(--card-shadow);
+            transition: all 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            border: 2px solid transparent;
+        }
+
+        .card:active {
+            transform: scale(0.95);
+        }
+
+        /* 卡片內的圖示圓圈 */
+        .card-icon {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+            transition: transform 0.3s;
+        }
+
+        .card:hover .card-icon {
+            transform: scale(1.1) rotate(5deg);
+        }
+
+        .card-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .card-desc {
+            font-size: 0.85rem;
+            color: #888;
+        }
+
+        /* --- 個別卡片配色 --- */
+        
+        /* 英文卡片 */
+        .card.eng { background-color: white; border-color: var(--color-eng); }
+        .card.eng .card-icon { background-color: var(--color-eng); }
+        .card.eng .card-title { color: var(--color-eng-dark); }
+
+        /* 數學卡片 */
+        .card.math { background-color: white; border-color: var(--color-math); }
+        .card.math .card-icon { background-color: var(--color-math); }
+        .card.math .card-title { color: var(--color-math-dark); }
+
+        /* 練字卡片 */
+        .card.write { background-color: white; border-color: var(--color-write); }
+        .card.write .card-icon { background-color: var(--color-write); }
+        .card.write .card-title { color: var(--color-write-dark); }
+
+        /* 未來擴充卡片 (範例) */
+        .card.future { 
+            border: 2px dashed #e0e0e0; 
+            background-color: #fafafa;
+            opacity: 0.7;
+            pointer-events: none; /* 暫時不能點 */
+        }
+        .card.future .card-icon { background-color: #f5f5f5; color: #bdbdbd; font-size: 2rem; }
+        .card.future .card-title { color: #bdbdbd; }
+
+        /* --- 動畫 --- */
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+
+        /* 裝飾性背景圓點 (讓畫面不單調) */
+        .bg-deco {
+            position: fixed;
+            border-radius: 50%;
+            z-index: -1;
+            opacity: 0.5;
+        }
+        .deco-1 { width: 200px; height: 200px; background: #e0f2f1; top: -50px; left: -50px; }
+        .deco-2 { width: 150px; height: 150px; background: #fff3e0; bottom: 20px; right: -30px; }
+
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>🎒 小學霸進階班</h1>
-        <div class="menu-list">
-            <a href="english.html" class="menu-btn btn-eng">
-                <span class="icon">🔠</span>英文拼寫 <span class="tag">手寫版</span>
-            </a>
-            <a href="math.html" class="menu-btn btn-math">
-                <span class="icon">🧮</span>數學運算 <span class="tag">手寫版</span>
-            </a>
-            <a href="writing.html" class="menu-btn btn-write">
-                <span class="icon">✍️</span>字體練習
-            </a>
+
+    <div class="bg-deco deco-1"></div>
+    <div class="bg-deco deco-2"></div>
+
+    <header>
+        <div class="avatar">🦁</div>
+        <h1>早安，小探險家！</h1>
+        <p>今天想挑戰什麼呢？</p>
+    </header>
+
+    <main>
+        <a href="english.html" class="card eng">
+            <div class="card-icon">🔠</div>
+            <div class="card-title">英文填空</div>
+            <div class="card-desc">聽音辨位・字母練習</div>
+        </a>
+
+        <a href="math.html" class="card math">
+            <div class="card-icon">🧮</div>
+            <div class="card-title">數學運算</div>
+            <div class="card-desc">加減法・手寫計算</div>
+        </a>
+
+        <a href="writing.html" class="card write">
+            <div class="card-icon">✍️</div>
+            <div class="card-title">字體工坊</div>
+            <div class="card-desc">筆順描紅・評分挑戰</div>
+        </a>
+
+        <div class="card future">
+            <div class="card-icon">🚀</div>
+            <div class="card-title">即將推出</div>
+            <div class="card-desc">更多好玩的關卡</div>
         </div>
-    </div>
+
+    </main>
+
 </body>
 </html>
