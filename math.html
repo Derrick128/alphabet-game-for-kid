@@ -4,27 +4,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>數學挑戰 - 手寫版</title>
+    <script src="data.js"></script>
     <style>
+        /* (樣式保持不變，與之前版本相同) */
         body { font-family: sans-serif; background-color: #fff3e0; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; touch-action: none; }
         .container { width: 90%; max-width: 500px; background: white; padding: 20px; border-radius: 20px; text-align: center; border: 5px solid #d84315; box-sizing: border-box; }
         .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
         .back-btn { padding: 5px 15px; background: #b0bec5; color: white; text-decoration: none; border-radius: 8px; font-weight: bold; }
-        
         #question-box { font-size: 2.5em; margin: 10px 0; color: #e65100; font-weight: bold; min-height: 60px; }
-        
-        /* 手寫區域 */
         #canvas-wrapper { position: relative; width: 100%; height: 250px; border: 4px dashed #ffab91; border-radius: 15px; margin-bottom: 10px; background: #fff; cursor: crosshair; }
         canvas { width: 100%; height: 100%; touch-action: none; border-radius: 10px; }
-        
-        /* 答案顯示區 (預設隱藏) */
         #answer-reveal { display: none; margin: 10px 0; padding: 10px; background: #fff8e1; border-radius: 10px; }
         .correct-ans { font-size: 2em; color: #2e7d32; font-weight: bold; }
-
-        /* 按鈕群組 */
         .btn-group { display: flex; gap: 10px; justify-content: center; margin-top: 10px; }
         .btn { padding: 12px 20px; font-size: 1.2em; border: none; border-radius: 10px; color: white; cursor: pointer; flex: 1; box-shadow: 0 4px 0 rgba(0,0,0,0.2); }
         .btn:active { transform: translateY(3px); box-shadow: none; }
-        
         .btn-show { background: #ff9800; }
         .btn-yes { background: #4caf50; display: none; }
         .btn-no { background: #f44336; display: none; }
@@ -60,32 +54,7 @@
     </div>
 
     <script>
-        const LEVELS = {
-            1: { title: "L1: 進位加法", generate: () => { 
-                // 產生需要進位的加法 (個位數相加 > 10)
-                let a = r(15, 45); 
-                let b = r(5, 9); // 讓個位數容易進位
-                // 調整 b 確保個位數相加 > 10
-                while((a%10) + b < 10) b++;
-                return { q: `${a} + ${b} = ?`, a: a+b };
-            }},
-            2: { title: "L2: 退位減法", generate: () => {
-                // 產生需要退位的減法
-                let a = r(30, 60);
-                let b = r(5, 9);
-                // 確保個位數 a < b (需要借位)
-                while((a%10) >= b) a = r(30, 60); 
-                return { q: `${a} - ${b} = ?`, a: a-b };
-            }},
-            3: { title: "L3: 連續運算", generate: () => {
-                let a = r(10, 20);
-                let b = r(5, 10);
-                let c = r(2, 8);
-                let isAdd = Math.random() > 0.5;
-                if(isAdd) return { q: `${a} + ${b} - ${c} = ?`, a: a+b-c };
-                else return { q: `${a} - ${b} + ${c} = ?`, a: a-b+c };
-            }}
-        };
+        const LEVELS_CONFIG = GAME_DATA.MATH.LEVELS; // 讀取設定
 
         let currentLevel = 1, score = 0, round = 0, currentAnswer = 0;
         const canvas = document.getElementById('writeCanvas');
@@ -93,10 +62,32 @@
         let isDrawing = false;
 
         function init() {
+            if(typeof GAME_DATA === 'undefined') { alert("請確認 data.js 存在"); return; }
             resizeCanvas();
             window.addEventListener('resize', resizeCanvas);
             setupCanvas();
             startLevel();
+        }
+
+        // 題目產生邏輯 (這裡仍保留邏輯，但參數從 data.js 讀取)
+        function generateQuestion(level) {
+            const config = LEVELS_CONFIG[level];
+            const { min, max, type } = config;
+            
+            if (type === 'ADD_CARRY') {
+                let a = r(min, max); 
+                let b = r(5, 9);
+                while((a%10) + b < 10) b++;
+                return { q: `${a} + ${b} = ?`, a: a+b };
+            } else if (type === 'SUB_BORROW') {
+                let a = r(min, max);
+                let b = r(5, 9);
+                while((a%10) >= b) a = r(min, max);
+                return { q: `${a} - ${b} = ?`, a: a-b };
+            } else {
+                let a = r(10, 20); let b = r(5, 10); let c = r(2, 8);
+                return (Math.random()>0.5) ? { q: `${a} + ${b} - ${c} = ?`, a: a+b-c } : { q: `${a} - ${b} + ${c} = ?`, a: a-b+c };
+            }
         }
 
         function resizeCanvas() {
@@ -109,7 +100,7 @@
 
         function startLevel() {
             score = 0; round = 0;
-            document.getElementById('level-title').innerText = LEVELS[currentLevel].title;
+            document.getElementById('level-title').innerText = LEVELS_CONFIG[currentLevel].title;
             nextQuestion();
         }
 
@@ -117,7 +108,7 @@
             if (round >= 5) {
                 if (score >= 4) {
                     if (currentLevel < 3) {
-                        alert(`🎉 太強了！答對 ${score} 題，晉級下一關！`); currentLevel++; startLevel();
+                        alert(`🎉 答對 ${score} 題，晉級下一關！`); currentLevel++; startLevel();
                     } else {
                         alert("🏆 數學大師！全部通關！"); location.href = 'index.html';
                     }
@@ -129,7 +120,6 @@
             round++;
             document.getElementById('score-board').innerText = `題數: ${round}/5 (得分: ${score})`;
             
-            // 重置介面
             clearCanvas();
             document.getElementById('answer-reveal').style.display = 'none';
             document.getElementById('btn-show').style.display = 'block';
@@ -137,8 +127,7 @@
             document.getElementById('btn-no').style.display = 'none';
             document.querySelector('.btn-clear').style.display = 'block';
 
-            // 出題
-            const qData = LEVELS[currentLevel].generate();
+            const qData = generateQuestion(currentLevel);
             document.getElementById('question-box').innerText = qData.q;
             currentAnswer = qData.a;
         }
@@ -146,10 +135,8 @@
         function showAnswer() {
             document.getElementById('correct-text').innerText = currentAnswer;
             document.getElementById('answer-reveal').style.display = 'block';
-            
-            // 切換按鈕
             document.getElementById('btn-show').style.display = 'none';
-            document.querySelector('.btn-clear').style.display = 'none'; // 鎖定不能再改
+            document.querySelector('.btn-clear').style.display = 'none';
             document.getElementById('btn-yes').style.display = 'block';
             document.getElementById('btn-no').style.display = 'block';
         }
@@ -159,7 +146,6 @@
             nextQuestion();
         }
 
-        // 畫布邏輯
         function setupCanvas() {
             const start = (e) => { e.preventDefault(); isDrawing = true; ctx.beginPath(); const {x,y} = pos(e); ctx.moveTo(x,y); };
             const move = (e) => { if(!isDrawing) return; e.preventDefault(); const {x,y} = pos(e); ctx.lineTo(x,y); ctx.stroke(); };
