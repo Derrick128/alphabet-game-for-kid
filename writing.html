@@ -7,95 +7,225 @@
     <script src="data.js"></script>
     <script src="sound.js"></script>
     <style>
-        body { font-family: 'Arial', sans-serif; background-color: #f1f8e9; margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; overflow: hidden; touch-action: none; }
-        .top-bar { width: 100%; padding: 15px; background: white; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; box-sizing: border-box; }
-        .back-btn { padding: 8px 15px; background: #bdbdbd; color: white; border: none; border-radius: 8px; font-weight: bold; text-decoration: none; font-size: 1.2rem; }
-        h2 { margin: 0; color: #558b2f; font-size: 1.8rem; }
-        #canvas-container { position: relative; width: 300px; height: 300px; margin: 20px auto; border: 6px dashed #aed581; border-radius: 25px; background-color: white; box-shadow: 0 8px 20px rgba(0,0,0,0.15); }
+        /* --- 基礎設定 --- */
+        body { font-family: 'Arial Rounded MT Bold', 'Microsoft JhengHei', sans-serif; background-color: #f1f8e9; margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; overflow: hidden; touch-action: none; }
+        .hidden { display: none !important; }
+        
+        /* --- 頂部導航 --- */
+        .top-bar { width: 100%; padding: 15px; background: white; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; box-sizing: border-box; z-index: 10; }
+        .nav-btn { background: none; border: none; font-size: 1.5rem; cursor: pointer; padding: 5px 10px; border-radius: 10px; transition: background 0.2s; }
+        .nav-btn:active { background: #eee; transform: scale(0.95); }
+        h2 { margin: 0; color: #558b2f; font-size: 1.5rem; }
+
+        /* --- 畫面 1: 總表選單 (Grid View) --- */
+        #selection-view { width: 100%; height: calc(100vh - 70px); overflow-y: auto; padding: 20px; box-sizing: border-box; }
+        
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+            gap: 15px;
+            padding-bottom: 40px;
+        }
+
+        .char-card {
+            background: white;
+            border-radius: 20px;
+            aspect-ratio: 1; /* 正方形 */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            color: #444;
+            box-shadow: 0 4px 0 rgba(0,0,0,0.1);
+            border: 3px solid transparent;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+        .char-card:active { transform: translateY(3px); box-shadow: none; }
+        
+        /* 英文卡片樣式 */
+        .grid-en .char-card { border-color: #b3e5fc; color: #0277bd; font-family: 'Arial', sans-serif; }
+        .grid-en .char-card:hover { background-color: #e1f5fe; }
+        
+        /* 注音卡片樣式 */
+        .grid-zh .char-card { border-color: #f8bbd0; color: #c2185b; font-size: 2rem; }
+        .grid-zh .char-card:hover { background-color: #fce4ec; }
+
+
+        /* --- 畫面 2: 練習模式 (Practice View) --- */
+        #practice-view { display: flex; flex-direction: column; align-items: center; width: 100%; }
+
+        #canvas-container { position: relative; width: 300px; height: 300px; margin: 10px auto; border: 6px dashed #aed581; border-radius: 25px; background-color: white; box-shadow: 0 8px 20px rgba(0,0,0,0.15); }
         canvas { position: absolute; top: 0; left: 0; border-radius: 20px; touch-action: none; }
         #bg-layer { z-index: 1; }
         #draw-layer { z-index: 2; cursor: crosshair; }
-        .controls { display: flex; gap: 15px; flex-wrap: wrap; justify-content: center; width: 90%; max-width: 400px; }
-        .btn { padding: 12px 0; font-size: 1.3rem; border: none; border-radius: 15px; color: white; font-weight: bold; cursor: pointer; flex: 1; min-width: 60px; box-shadow: 0 4px 0 rgba(0,0,0,0.2); transition: transform 0.1s; }
+
+        #result-display { margin-top: 5px; font-size: 1.8rem; font-weight: bold; color: #333; height: 40px; text-align: center; }
+
+        .controls { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; width: 95%; max-width: 400px; }
+        .btn { padding: 10px 0; font-size: 1.2rem; border: none; border-radius: 15px; color: white; font-weight: bold; cursor: pointer; flex: 1; min-width: 60px; box-shadow: 0 4px 0 rgba(0,0,0,0.2); transition: transform 0.1s; }
         .btn:active { transform: translateY(3px); box-shadow: none; }
-        .btn-nav { background-color: #7e57c2; flex: 0.8; }
-        .btn-clear { background-color: #ef5350; }
-        .btn-check { background-color: #26a69a; flex: 1.5; font-size: 1.4rem; } 
-        .btn-case { background-color: #ffa726; }
-        .hidden { display: none !important; }
-        #result-display { margin-top: 10px; font-size: 2.2rem; font-weight: bold; color: #333; height: 50px; text-align: center; }
         
-        /* 音樂按鈕 (縮小版) */
-        #mini-music { position: absolute; top: 15px; right: 15px; font-size: 1.2rem; cursor: pointer; background:none; border:none;}
+        .btn-nav { background-color: #7e57c2; flex: 0.6; }
+        .btn-clear { background-color: #ef5350; }
+        .btn-check { background-color: #26a69a; flex: 1.5; font-size: 1.3rem; } 
+        .btn-case { background-color: #ffa726; }
+        
     </style>
 </head>
 <body>
 
     <div class="top-bar">
-        <a href="index.html" class="back-btn" onclick="playClick()">🏠</a>
-        <h2 id="current-letter">練習: A</h2>
-        <button id="mini-music" onclick="toggleMusic()">🎵</button>
+        <button id="btn-home" class="nav-btn" onclick="goHome()">🏠</button>
+        <button id="btn-back" class="nav-btn hidden" onclick="goBackToGrid()">↩️ 列表</button>
+        
+        <h2 id="page-title">練字小教室</h2>
+        
+        <button class="nav-btn" onclick="toggleMusicDisplay()">🎵</button>
     </div>
 
-    <div id="canvas-container">
-        <canvas id="bg-layer" width="300" height="300"></canvas>
-        <canvas id="draw-layer" width="300" height="300"></canvas>
+    <div id="selection-view">
+        <div id="grid-container" class="grid-container">
+            </div>
     </div>
 
-    <div id="result-display"></div>
+    <div id="practice-view" class="hidden">
+        <div id="canvas-container">
+            <canvas id="bg-layer" width="300" height="300"></canvas>
+            <canvas id="draw-layer" width="300" height="300"></canvas>
+        </div>
 
-    <div class="controls">
-        <button class="btn btn-nav" onclick="changeLetter(-1)">◀</button>
-        <button class="btn btn-case" id="case-btn" onclick="toggleCase()">Aa</button>
-        <button class="btn btn-nav" onclick="changeLetter(1)">▶</button>
-    </div>
-    <div class="controls" style="margin-top:15px;">
-        <button class="btn btn-clear" onclick="clearCanvas()">重寫</button>
-        <button class="btn btn-check" onclick="calculateScore()">💯 評分</button>
+        <div id="result-display"></div>
+
+        <div class="controls">
+            <button class="btn btn-nav" onclick="changeLetter(-1)">◀</button>
+            <button class="btn btn-case" id="case-btn" onclick="toggleCase()">Aa</button>
+            <button class="btn btn-nav" onclick="changeLetter(1)">▶</button>
+        </div>
+        <div class="controls" style="margin-top:10px;">
+            <button class="btn btn-clear" onclick="clearCanvas()">重寫</button>
+            <button class="btn btn-check" onclick="calculateScore()">💯 評分</button>
+        </div>
     </div>
 
     <script>
-        // 1. 取得網址參數 (判斷是 EN 還是 ZH)
+        // 1. 初始化設定
         const urlParams = new URLSearchParams(window.location.search);
-        const mode = urlParams.get('type') || 'EN'; // 預設英文
-
-        let letters = [];
-        if (mode === 'ZH') {
-            letters = GAME_DATA.WRITING.ZH;
-            document.getElementById('case-btn').classList.add('hidden'); // 注音沒有大小寫
-        } else {
-            letters = GAME_DATA.WRITING.EN;
-        }
-
-        let currentIndex = 0;
-        let isUpper = true;
-        let isDrawing = false;
+        const mode = urlParams.get('type') || 'EN'; // 'EN' or 'ZH'
         
+        let letters = [];
+        let currentIndex = 0;
+        let isUpper = true; // 僅英文有效
+        
+        // 畫布變數
         const canvasSize = 300;
         const bgCanvas = document.getElementById('bg-layer');
         const bgCtx = bgCanvas.getContext('2d');
         const drawCanvas = document.getElementById('draw-layer');
         const drawCtx = drawCanvas.getContext('2d');
         const resultDisplay = document.getElementById('result-display');
+        let isDrawing = false;
 
         function init() {
             if(typeof GAME_DATA === 'undefined') { alert("請確認 data.js 存在"); return; }
             
+            // 設定標題與資料
+            if (mode === 'ZH') {
+                letters = GAME_DATA.WRITING.ZH;
+                document.getElementById('page-title').innerText = "注音符號表";
+                document.getElementById('case-btn').classList.add('hidden');
+                document.getElementById('grid-container').className = "grid-container grid-zh";
+            } else {
+                letters = GAME_DATA.WRITING.EN;
+                document.getElementById('page-title').innerText = "English ABC";
+                document.getElementById('grid-container').className = "grid-container grid-en";
+            }
+
+            renderGrid();
+            setupCanvas();
+        }
+
+        // --- 總表邏輯 ---
+
+        function renderGrid() {
+            const container = document.getElementById('grid-container');
+            container.innerHTML = ''; // 清空
+
+            letters.forEach((char, index) => {
+                const btn = document.createElement('div');
+                btn.className = 'char-card';
+                btn.innerText = char;
+                btn.onclick = () => startPractice(index);
+                container.appendChild(btn);
+            });
+        }
+
+        function goHome() {
+            window.location.href = 'index.html';
+        }
+
+        // --- 練習模式切換 ---
+
+        function startPractice(index) {
+            playClick();
+            currentIndex = index;
+            isUpper = true; // 每次進去預設大寫
+
+            // 切換視圖
+            document.getElementById('selection-view').classList.add('hidden');
+            document.getElementById('practice-view').classList.remove('hidden');
+            
+            // 切換導航按鈕
+            document.getElementById('btn-home').classList.add('hidden');
+            document.getElementById('btn-back').classList.remove('hidden');
+
+            // 標題變更
+            document.getElementById('page-title').innerText = "練習中...";
+
+            // 重置畫布
+            clearCanvas();
+            renderTemplate();
+        }
+
+        function goBackToGrid() {
+            playClick();
+            // 切換視圖
+            document.getElementById('practice-view').classList.add('hidden');
+            document.getElementById('selection-view').classList.remove('hidden');
+
+            // 切換導航按鈕
+            document.getElementById('btn-back').classList.add('hidden');
+            document.getElementById('btn-home').classList.remove('hidden');
+
+            // 恢復標題
+            document.getElementById('page-title').innerText = (mode === 'ZH') ? "注音符號表" : "English ABC";
+        }
+
+        // --- 畫布與評分邏輯 (核心功能) ---
+
+        function setupCanvas() {
             drawCtx.lineCap = 'round';
             drawCtx.lineJoin = 'round';
-            drawCtx.lineWidth = 15; // 🖌️ 修改處：筆觸變細 (原30 -> 15)
+            drawCtx.lineWidth = 15; // 筆觸縮小
             drawCtx.strokeStyle = '#333'; 
-            
-            renderTemplate();
-            setupEvents();
+
+            const start = (e) => { e.preventDefault(); isDrawing = true; drawCtx.beginPath(); const {x, y} = getPos(e); drawCtx.moveTo(x, y); playClick(); };
+            const move = (e) => { if (!isDrawing) return; e.preventDefault(); const {x, y} = getPos(e); drawCtx.lineTo(x, y); drawCtx.stroke(); };
+            const end = () => isDrawing = false;
+
+            drawCanvas.addEventListener('mousedown', start); drawCanvas.addEventListener('mousemove', move);
+            drawCanvas.addEventListener('mouseup', end); drawCanvas.addEventListener('mouseout', end);
+            drawCanvas.addEventListener('touchstart', start, {passive: false}); drawCanvas.addEventListener('touchmove', move, {passive: false}); drawCanvas.addEventListener('touchend', end);
         }
 
         function renderTemplate() {
             bgCtx.clearRect(0, 0, canvasSize, canvasSize);
+            
             let char = letters[currentIndex];
             if (mode === 'EN' && !isUpper) char = char.toLowerCase();
             
-            document.getElementById('current-letter').innerText = `練習: ${char}`;
+            // 英文顯示 "練習: A"，注音顯示 "練習: ㄅ"
+            document.getElementById('page-title').innerText = `練習: ${char}`;
             
             // 畫格線
             bgCtx.strokeStyle = '#e1f5fe'; bgCtx.lineWidth = 2; bgCtx.beginPath();
@@ -103,22 +233,12 @@
             bgCtx.moveTo(canvasSize/2, 0); bgCtx.lineTo(canvasSize/2, canvasSize);
             bgCtx.stroke();
             
-            // 畫範本字
+            // 畫字體
             bgCtx.font = "200px Arial"; 
-            if(mode === 'ZH') bgCtx.font = "180px Microsoft JhengHei"; // 注音字體微調
-
+            if(mode === 'ZH') bgCtx.font = "180px Microsoft JhengHei"; 
             bgCtx.textAlign = "center"; bgCtx.textBaseline = "middle";
             bgCtx.fillStyle = "#cfd8dc"; 
             bgCtx.fillText(char, canvasSize/2, canvasSize/2 + 15);
-        }
-
-        function setupEvents() {
-            const start = (e) => { e.preventDefault(); isDrawing = true; drawCtx.beginPath(); const {x, y} = getPos(e); drawCtx.moveTo(x, y); playClick(); }; // 點下去也有聲音
-            const move = (e) => { if (!isDrawing) return; e.preventDefault(); const {x, y} = getPos(e); drawCtx.lineTo(x, y); drawCtx.stroke(); };
-            const end = () => isDrawing = false;
-            drawCanvas.addEventListener('mousedown', start); drawCanvas.addEventListener('mousemove', move);
-            drawCanvas.addEventListener('mouseup', end); drawCanvas.addEventListener('mouseout', end);
-            drawCanvas.addEventListener('touchstart', start, {passive: false}); drawCanvas.addEventListener('touchmove', move, {passive: false}); drawCanvas.addEventListener('touchend', end);
         }
 
         function getPos(e) {
@@ -132,25 +252,26 @@
             const bgData = bgCtx.getImageData(0, 0, canvasSize, canvasSize).data;
             const drawData = drawCtx.getImageData(0, 0, canvasSize, canvasSize).data;
             let targetPixels = 0, hitPixels = 0, outsidePixels = 0;
+            
             for (let i = 0; i < bgData.length; i += 4) {
-                const hasTemplate = bgData[i+3] > 0; const hasDrawing = drawData[i+3] > 0;
+                const hasTemplate = bgData[i+3] > 0; 
+                const hasDrawing = drawData[i+3] > 0;
                 if (hasTemplate) { targetPixels++; if (hasDrawing) hitPixels++; } 
                 else { if (hasDrawing) outsidePixels++; }
             }
+
             if (targetPixels === 0) return;
             if (hitPixels === 0) { resultDisplay.innerText = "請先寫字喔！"; resultDisplay.style.color = "#555"; return; }
             
             let rawCoverage = (hitPixels / targetPixels) * 100;
-            
-            // 🖌️ 修改處：因為筆變細了，覆蓋率會下降，所以提高獎勵係數 (1.2 -> 1.4)
-            let boostedScore = rawCoverage * 1.4; 
-            
+            let boostedScore = rawCoverage * 1.4; // 獎勵係數
             let penalty = (outsidePixels / targetPixels) * 100 * 0.1;
+            
             let finalScore = Math.round(boostedScore - penalty);
             if (finalScore > 100) finalScore = 100; if (finalScore < 0) finalScore = 0;
             
             let msg = "", color = "";
-            if (finalScore === 100) { msg = "🌟 100分！完美！"; color = "#2e7d32"; playSuccess(); } // 滿分播放成功音效
+            if (finalScore === 100) { msg = "🌟 100分！完美！"; color = "#2e7d32"; playSuccess(); }
             else if (finalScore >= 90) { msg = "😍 " + finalScore + "分！太棒了！"; color = "#43a047"; playSuccess(); }
             else if (finalScore >= 80) { msg = "😊 " + finalScore + "分！很不錯！"; color = "#f57f17"; playClick(); }
             else { msg = "🤔 " + finalScore + "分，再試試！"; color = "#d84315"; playClick(); }
@@ -164,17 +285,13 @@
             currentIndex += dir; 
             if (currentIndex < 0) currentIndex = letters.length - 1; 
             if (currentIndex >= letters.length) currentIndex = 0; 
-            clearCanvas(); 
-            renderTemplate(); 
-            playClick();
+            clearCanvas(); renderTemplate(); playClick();
         }
         
         function toggleCase() { isUpper = !isUpper; clearCanvas(); renderTemplate(); playClick(); }
 
-        // 音樂控制
-        function toggleMusic() {
-            const isPlaying = toggleBGM();
-            document.getElementById('mini-music').innerText = isPlaying ? "⏸️" : "🎵";
+        function toggleMusicDisplay() {
+            toggleBGM();
         }
 
         init();
