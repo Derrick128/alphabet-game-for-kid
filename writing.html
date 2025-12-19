@@ -3,63 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>練字小教室 - 智慧評分版</title>
+    <title>練字小教室</title>
+    <script src="data.js"></script>
     <style>
+        /* (樣式保持不變) */
         body { font-family: 'Arial', sans-serif; background-color: #f1f8e9; margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; overflow: hidden; touch-action: none; }
-        
-        .top-bar { width: 100%; padding: 10px; background: white; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; }
-        .back-btn { padding: 8px 15px; background: #bdbdbd; color: white; border: none; border-radius: 8px; font-weight: bold; text-decoration: none; font-size: 1rem; margin-left: 10px; }
-        
-        h2 { margin: 0; color: #558b2f; font-size: 1.5rem; }
-
-        /* 畫布容器：使用 Relative 定位讓兩個 Canvas 重疊 */
-        #canvas-container {
-            position: relative;
-            width: 300px;
-            height: 300px;
-            margin: 20px auto;
-            border: 5px dashed #aed581;
-            border-radius: 20px;
-            background-color: white;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-        }
-
-        canvas {
-            position: absolute;
-            top: 0;
-            left: 0;
-            border-radius: 15px;
-            touch-action: none; /* 禁止觸控捲動 */
-        }
-        
-        /* bg-layer 顯示淺色範本，draw-layer 讓用戶寫字 */
+        .top-bar { width: 100%; padding: 15px; background: white; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; box-sizing: border-box; }
+        .back-btn { padding: 8px 15px; background: #bdbdbd; color: white; border: none; border-radius: 8px; font-weight: bold; text-decoration: none; font-size: 1.2rem; }
+        h2 { margin: 0; color: #558b2f; font-size: 1.8rem; }
+        #canvas-container { position: relative; width: 300px; height: 300px; margin: 20px auto; border: 6px dashed #aed581; border-radius: 25px; background-color: white; box-shadow: 0 8px 20px rgba(0,0,0,0.15); }
+        canvas { position: absolute; top: 0; left: 0; border-radius: 20px; touch-action: none; }
         #bg-layer { z-index: 1; }
         #draw-layer { z-index: 2; cursor: crosshair; }
-
-        .controls { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; width: 95%; max-width: 500px; }
-        .btn { padding: 12px 15px; font-size: 1.1rem; border: none; border-radius: 12px; color: white; font-weight: bold; cursor: pointer; flex: 1; min-width: 80px; box-shadow: 0 4px 0 rgba(0,0,0,0.2); transition: transform 0.1s; }
+        .controls { display: flex; gap: 15px; flex-wrap: wrap; justify-content: center; width: 90%; max-width: 400px; }
+        .btn { padding: 12px 0; font-size: 1.3rem; border: none; border-radius: 15px; color: white; font-weight: bold; cursor: pointer; flex: 1; min-width: 60px; box-shadow: 0 4px 0 rgba(0,0,0,0.2); transition: transform 0.1s; }
         .btn:active { transform: translateY(3px); box-shadow: none; }
-        
-        .btn-nav { background-color: #7e57c2; }
+        .btn-nav { background-color: #7e57c2; flex: 0.8; }
         .btn-clear { background-color: #ef5350; }
-        .btn-check { background-color: #26a69a; font-size: 1.3rem; flex: 2; } /* 評分按鈕大一點 */
+        .btn-check { background-color: #26a69a; flex: 1.5; font-size: 1.4rem; } 
         .btn-case { background-color: #ffa726; }
-
-        #result-display {
-            margin-top: 15px;
-            font-size: 2rem;
-            font-weight: bold;
-            color: #333;
-            height: 40px;
-        }
+        #result-display { margin-top: 10px; font-size: 2.2rem; font-weight: bold; color: #333; height: 50px; text-align: center; }
     </style>
 </head>
 <body>
-
     <div class="top-bar">
         <a href="index.html" class="back-btn">🏠</a>
         <h2 id="current-letter">練習: A</h2>
-        <div style="width: 50px;"></div> </div>
+        <div style="width: 40px;"></div> 
+    </div>
 
     <div id="canvas-container">
         <canvas id="bg-layer" width="300" height="300"></canvas>
@@ -73,13 +44,13 @@
         <button class="btn btn-case" onclick="toggleCase()">Aa</button>
         <button class="btn btn-nav" onclick="changeLetter(1)">▶</button>
     </div>
-    <div class="controls" style="margin-top:10px;">
+    <div class="controls" style="margin-top:15px;">
         <button class="btn btn-clear" onclick="clearCanvas()">重寫</button>
         <button class="btn btn-check" onclick="calculateScore()">💯 評分</button>
     </div>
 
     <script>
-        const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split('');
+        const letters = GAME_DATA.WRITING.LETTERS; // 讀取字母清單
         let currentIndex = 0;
         let isUpper = true;
         let isDrawing = false;
@@ -91,157 +62,75 @@
         const drawCtx = drawCanvas.getContext('2d');
         const resultDisplay = document.getElementById('result-display');
 
-        // --- 初始化設定 ---
         function init() {
-            // 設定畫筆樣式
+            if(typeof GAME_DATA === 'undefined') { alert("請確認 data.js 存在"); return; }
             drawCtx.lineCap = 'round';
             drawCtx.lineJoin = 'round';
-            drawCtx.lineWidth = 25; // 用戶筆觸要比範本粗一點，比較容易覆蓋
+            drawCtx.lineWidth = 30; 
             drawCtx.strokeStyle = '#333'; 
-
             renderTemplate();
             setupEvents();
         }
 
-        // --- 繪製範本 (背景層) ---
+        // ... (其他函式保持不變，因為它們是 UI 邏輯，不涉及資料內容) ...
+        
         function renderTemplate() {
             bgCtx.clearRect(0, 0, canvasSize, canvasSize);
-            
             let char = letters[currentIndex];
             if (!isUpper) char = char.toLowerCase();
-            
             document.getElementById('current-letter').innerText = `練習: ${char}`;
-
-            // 繪製輔助線
-            bgCtx.strokeStyle = '#e0f7fa';
-            bgCtx.lineWidth = 2;
-            bgCtx.beginPath();
+            bgCtx.strokeStyle = '#e1f5fe'; bgCtx.lineWidth = 2; bgCtx.beginPath();
             bgCtx.moveTo(0, canvasSize/2); bgCtx.lineTo(canvasSize, canvasSize/2);
             bgCtx.moveTo(canvasSize/2, 0); bgCtx.lineTo(canvasSize/2, canvasSize);
             bgCtx.stroke();
-
-            // 繪製文字範本
-            bgCtx.font = "200px Arial";
-            bgCtx.textAlign = "center";
-            bgCtx.textBaseline = "middle";
-            bgCtx.fillStyle = "#cfd8dc"; // 淺灰色範本
-            bgCtx.fillText(char, canvasSize/2, canvasSize/2 + 15);
+            bgCtx.font = "200px Arial"; bgCtx.textAlign = "center"; bgCtx.textBaseline = "middle";
+            bgCtx.fillStyle = "#cfd8dc"; bgCtx.fillText(char, canvasSize/2, canvasSize/2 + 15);
         }
 
-        // --- 事件監聽 (觸控與滑鼠) ---
         function setupEvents() {
-            const start = (e) => {
-                e.preventDefault();
-                isDrawing = true;
-                drawCtx.beginPath();
-                const {x, y} = getPos(e);
-                drawCtx.moveTo(x, y);
-            };
-            const move = (e) => {
-                if (!isDrawing) return;
-                e.preventDefault();
-                const {x, y} = getPos(e);
-                drawCtx.lineTo(x, y);
-                drawCtx.stroke();
-            };
+            const start = (e) => { e.preventDefault(); isDrawing = true; drawCtx.beginPath(); const {x, y} = getPos(e); drawCtx.moveTo(x, y); };
+            const move = (e) => { if (!isDrawing) return; e.preventDefault(); const {x, y} = getPos(e); drawCtx.lineTo(x, y); drawCtx.stroke(); };
             const end = () => isDrawing = false;
-
-            drawCanvas.addEventListener('mousedown', start);
-            drawCanvas.addEventListener('mousemove', move);
-            drawCanvas.addEventListener('mouseup', end);
-            drawCanvas.addEventListener('mouseout', end);
-            
-            drawCanvas.addEventListener('touchstart', start, {passive: false});
-            drawCanvas.addEventListener('touchmove', move, {passive: false});
-            drawCanvas.addEventListener('touchend', end);
+            drawCanvas.addEventListener('mousedown', start); drawCanvas.addEventListener('mousemove', move);
+            drawCanvas.addEventListener('mouseup', end); drawCanvas.addEventListener('mouseout', end);
+            drawCanvas.addEventListener('touchstart', start, {passive: false}); drawCanvas.addEventListener('touchmove', move, {passive: false}); drawCanvas.addEventListener('touchend', end);
         }
 
         function getPos(e) {
             const rect = drawCanvas.getBoundingClientRect();
             const clientX = e.touches ? e.touches[0].clientX : e.clientX;
             const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-            return {
-                x: clientX - rect.left,
-                y: clientY - rect.top
-            };
+            return { x: clientX - rect.left, y: clientY - rect.top };
         }
 
-        // --- 核心評分邏輯 (Pixel Comparison) ---
         function calculateScore() {
-            // 1. 取得兩層的像素數據
             const bgData = bgCtx.getImageData(0, 0, canvasSize, canvasSize).data;
             const drawData = drawCtx.getImageData(0, 0, canvasSize, canvasSize).data;
-
-            let targetPixels = 0; // 範本有多少像素
-            let hitPixels = 0;    // 用戶塗對了多少
-            let outsidePixels = 0; // 用戶塗出去多少
-
+            let targetPixels = 0, hitPixels = 0, outsidePixels = 0;
             for (let i = 0; i < bgData.length; i += 4) {
-                // 檢查 Alpha 通道 (透明度 > 0 表示有內容)
-                const hasTemplate = bgData[i+3] > 0; 
-                const hasDrawing = drawData[i+3] > 0;
-
-                if (hasTemplate) {
-                    targetPixels++;
-                    if (hasDrawing) hitPixels++;
-                } else {
-                    // 如果這裡是空白，但用戶畫了，就是畫出去了
-                    // 為了容錯，只在完全偏離時扣分
-                    if (hasDrawing) outsidePixels++;
-                }
+                const hasTemplate = bgData[i+3] > 0; const hasDrawing = drawData[i+3] > 0;
+                if (hasTemplate) { targetPixels++; if (hasDrawing) hitPixels++; } 
+                else { if (hasDrawing) outsidePixels++; }
             }
-
-            if (targetPixels === 0) return; // 避免除以零
-
-            // 計算覆蓋率 (0-100%)
-            const coverage = (hitPixels / targetPixels) * 100;
-            
-            // 計算溢出懲罰 (畫出去太多會扣分，係數 0.2 表示輕微懲罰)
-            const penalty = (outsidePixels / targetPixels) * 100 * 0.2;
-
-            // 最終分數公式
-            let finalScore = Math.round(coverage - penalty);
-            if (finalScore < 0) finalScore = 0;
-            if (finalScore > 100) finalScore = 100;
-
-            // 顯示結果
-            let msg = "";
-            if (finalScore === 100) msg = "🌟 完美！ (100分)";
-            else if (finalScore >= 90) msg = "😍 太棒了！ (" + finalScore + "分)";
-            else if (finalScore >= 70) msg = "😊 很不錯 (" + finalScore + "分)";
-            else if (finalScore >= 50) msg = "😐 加油 (" + finalScore + "分)";
-            else msg = "🤔 再試試 (" + finalScore + "分)";
-            
-            // 如果完全沒畫
-            if (hitPixels === 0) msg = "請先寫字喔！";
-
-            resultDisplay.innerText = msg;
-            
-            // 根據分數變色
-            if(finalScore >= 80) resultDisplay.style.color = "#2e7d32";
-            else if(finalScore >= 50) resultDisplay.style.color = "#f57f17";
-            else resultDisplay.style.color = "#c62828";
+            if (targetPixels === 0) return;
+            if (hitPixels === 0) { resultDisplay.innerText = "請先寫字喔！"; resultDisplay.style.color = "#555"; return; }
+            let rawCoverage = (hitPixels / targetPixels) * 100;
+            let boostedScore = rawCoverage * 1.2;
+            let penalty = (outsidePixels / targetPixels) * 100 * 0.1;
+            let finalScore = Math.round(boostedScore - penalty);
+            if (finalScore > 100) finalScore = 100; if (finalScore < 0) finalScore = 0;
+            let msg = "", color = "";
+            if (finalScore === 100) { msg = "🌟 100分！完美！"; color = "#2e7d32"; }
+            else if (finalScore >= 90) { msg = "😍 " + finalScore + "分！太棒了！"; color = "#43a047"; }
+            else if (finalScore >= 80) { msg = "😊 " + finalScore + "分！很不錯！"; color = "#f57f17"; }
+            else if (finalScore >= 60) { msg = "🙂 " + finalScore + "分！加油！"; color = "#fb8c00"; }
+            else { msg = "🤔 " + finalScore + "分，再試試！"; color = "#d84315"; }
+            resultDisplay.innerText = msg; resultDisplay.style.color = color;
         }
 
-        // --- 按鈕功能 ---
-        function clearCanvas() {
-            drawCtx.clearRect(0, 0, canvasSize, canvasSize);
-            resultDisplay.innerText = "";
-        }
-
-        function changeLetter(dir) {
-            currentIndex += dir;
-            if (currentIndex < 0) currentIndex = 25;
-            if (currentIndex > 25) currentIndex = 0;
-            clearCanvas();
-            renderTemplate();
-        }
-
-        function toggleCase() {
-            isUpper = !isUpper;
-            clearCanvas();
-            renderTemplate();
-        }
+        function clearCanvas() { drawCtx.clearRect(0, 0, canvasSize, canvasSize); resultDisplay.innerText = ""; }
+        function changeLetter(dir) { currentIndex += dir; if (currentIndex < 0) currentIndex = 25; if (currentIndex > 25) currentIndex = 0; clearCanvas(); renderTemplate(); }
+        function toggleCase() { isUpper = !isUpper; clearCanvas(); renderTemplate(); }
 
         init();
     </script>
