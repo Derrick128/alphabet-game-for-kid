@@ -3,168 +3,70 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>小小探險家 - 學習首頁</title>
+    <title>Luke's Learning</title>
+    <script src="sound.js"></script>
+    <script src="data.js"></script>
     <style>
-        /* --- 全局設定 --- */
+        /* (樣式與之前相似，加入音樂按鈕樣式) */
         :root {
-            --bg-color: #fdfbf7; /* 溫暖的米白色背景 */
+            --bg-color: #fdfbf7; 
             --card-shadow: 0 10px 20px rgba(0,0,0,0.05);
-            --card-hover-shadow: 0 15px 25px rgba(0,0,0,0.1);
-            /* 主題色變數 */
-            --color-eng: #e3f2fd;  /* 淺藍 */
-            --color-eng-dark: #42a5f5;
-            --color-math: #fff3e0; /* 淺橘 */
-            --color-math-dark: #ff9800;
-            --color-write: #e8f5e9; /* 淺綠 */
-            --color-write-dark: #66bb6a;
-            --color-future: #f3e5f5; /* 淺紫 (預留) */
+            --color-eng: #e3f2fd; --color-eng-dark: #42a5f5;
+            --color-math: #fff3e0; --color-math-dark: #ff9800;
+            --color-write: #e8f5e9; --color-write-dark: #66bb6a;
+            --color-zh: #fce4ec; --color-zh-dark: #ec407a; /* 注音主題色 */
         }
 
         body {
             font-family: 'Arial Rounded MT Bold', 'Microsoft JhengHei', sans-serif;
-            margin: 0;
-            background-color: var(--bg-color);
-            color: #444;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+            margin: 0; background-color: var(--bg-color); color: #444;
+            min-height: 100vh; display: flex; flex-direction: column; align-items: center;
         }
 
-        /* --- 頭部歡迎區 --- */
-        header {
-            width: 100%;
-            padding: 40px 20px 20px;
-            text-align: center;
-            box-sizing: border-box;
-        }
+        header { width: 100%; padding: 40px 20px 20px; text-align: center; box-sizing: border-box; }
+        .avatar { font-size: 3.5rem; margin-bottom: 10px; display: inline-block; animation: float 3s ease-in-out infinite; }
+        h1 { margin: 0; font-size: 2.2rem; color: #5d4037; letter-spacing: 1px; }
+        p { margin: 5px 0 0; color: #8d6e63; font-size: 1rem; }
 
-        .avatar {
-            font-size: 3.5rem;
-            margin-bottom: 10px;
-            display: inline-block;
-            animation: float 3s ease-in-out infinite;
-        }
-
-        h1 {
-            margin: 0;
-            font-size: 1.8rem;
-            color: #5d4037;
-        }
-
-        p {
-            margin: 5px 0 0;
-            color: #8d6e63;
-            font-size: 1rem;
-        }
-
-        /* --- 主內容：網格佈局 --- */
         main {
-            width: 90%;
-            max-width: 600px; /* 平板寬度限制 */
-            display: grid;
-            /* 自動適應：手機一欄或兩欄，平板兩欄 */
-            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); 
-            gap: 20px;
-            padding-bottom: 40px;
-            box-sizing: border-box;
+            width: 90%; max-width: 600px;
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); 
+            gap: 20px; padding-bottom: 80px; box-sizing: border-box;
         }
 
-        /* --- 卡片設計 --- */
         .card {
-            background: white;
-            border-radius: 25px;
-            padding: 25px 15px;
-            text-align: center;
-            text-decoration: none;
-            color: inherit;
-            box-shadow: var(--card-shadow);
-            transition: all 0.2s ease;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-            overflow: hidden;
-            border: 2px solid transparent;
+            background: white; border-radius: 25px; padding: 25px 15px; text-align: center;
+            text-decoration: none; color: inherit; box-shadow: var(--card-shadow);
+            transition: all 0.2s ease; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; border: 2px solid transparent; cursor: pointer;
+        }
+        .card:active { transform: scale(0.95); }
+        .card-icon { width: 70px; height: 70px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; margin-bottom: 15px; transition: transform 0.3s; }
+        .card:hover .card-icon { transform: scale(1.1) rotate(5deg); }
+        .card-title { font-size: 1.1rem; font-weight: bold; margin-bottom: 5px; }
+        .card-desc { font-size: 0.85rem; color: #888; }
+
+        /* 個別配色 */
+        .card.eng { border-color: var(--color-eng); } .card.eng .card-icon { background-color: var(--color-eng); } .card.eng .card-title { color: var(--color-eng-dark); }
+        .card.math { border-color: var(--color-math); } .card.math .card-icon { background-color: var(--color-math); } .card.math .card-title { color: var(--color-math-dark); }
+        .card.write-en { border-color: var(--color-write); } .card.write-en .card-icon { background-color: var(--color-write); } .card.write-en .card-title { color: var(--color-write-dark); }
+        .card.write-zh { border-color: var(--color-zh); } .card.write-zh .card-icon { background-color: var(--color-zh); } .card.write-zh .card-title { color: var(--color-zh-dark); }
+
+        /* 音樂按鈕 */
+        #music-toggle {
+            position: fixed; bottom: 20px; right: 20px;
+            width: 50px; height: 50px; border-radius: 50%;
+            background: #fff; border: 3px solid #ffcc80;
+            font-size: 1.5rem; cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            display: flex; align-items: center; justify-content: center;
+            z-index: 100;
         }
 
-        .card:active {
-            transform: scale(0.95);
-        }
-
-        /* 卡片內的圖示圓圈 */
-        .card-icon {
-            width: 70px;
-            height: 70px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 2.5rem;
-            margin-bottom: 15px;
-            transition: transform 0.3s;
-        }
-
-        .card:hover .card-icon {
-            transform: scale(1.1) rotate(5deg);
-        }
-
-        .card-title {
-            font-size: 1.2rem;
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-
-        .card-desc {
-            font-size: 0.85rem;
-            color: #888;
-        }
-
-        /* --- 個別卡片配色 --- */
-        
-        /* 英文卡片 */
-        .card.eng { background-color: white; border-color: var(--color-eng); }
-        .card.eng .card-icon { background-color: var(--color-eng); }
-        .card.eng .card-title { color: var(--color-eng-dark); }
-
-        /* 數學卡片 */
-        .card.math { background-color: white; border-color: var(--color-math); }
-        .card.math .card-icon { background-color: var(--color-math); }
-        .card.math .card-title { color: var(--color-math-dark); }
-
-        /* 練字卡片 */
-        .card.write { background-color: white; border-color: var(--color-write); }
-        .card.write .card-icon { background-color: var(--color-write); }
-        .card.write .card-title { color: var(--color-write-dark); }
-
-        /* 未來擴充卡片 (範例) */
-        .card.future { 
-            border: 2px dashed #e0e0e0; 
-            background-color: #fafafa;
-            opacity: 0.7;
-            pointer-events: none; /* 暫時不能點 */
-        }
-        .card.future .card-icon { background-color: #f5f5f5; color: #bdbdbd; font-size: 2rem; }
-        .card.future .card-title { color: #bdbdbd; }
-
-        /* --- 動畫 --- */
-        @keyframes float {
-            0% { transform: translateY(0px); }
-            50% { transform: translateY(-10px); }
-            100% { transform: translateY(0px); }
-        }
-
-        /* 裝飾性背景圓點 (讓畫面不單調) */
-        .bg-deco {
-            position: fixed;
-            border-radius: 50%;
-            z-index: -1;
-            opacity: 0.5;
-        }
+        @keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-10px); } 100% { transform: translateY(0px); } }
+        .bg-deco { position: fixed; border-radius: 50%; z-index: -1; opacity: 0.5; }
         .deco-1 { width: 200px; height: 200px; background: #e0f2f1; top: -50px; left: -50px; }
         .deco-2 { width: 150px; height: 150px; background: #fff3e0; bottom: 20px; right: -30px; }
-
     </style>
 </head>
 <body>
@@ -174,36 +76,45 @@
 
     <header>
         <div class="avatar">🦁</div>
-        <h1>早安，小探險家！</h1>
-        <p>今天想挑戰什麼呢？</p>
+        <h1>Luke's Learning</h1>
+        <p>今天想玩什麼呢？</p>
     </header>
 
     <main>
-        <a href="english.html" class="card eng">
+        <a href="english.html" class="card eng" onclick="playClick()">
             <div class="card-icon">🔠</div>
-            <div class="card-title">英文填空</div>
-            <div class="card-desc">聽音辨位・字母練習</div>
+            <div class="card-title">英文聽力</div>
+            <div class="card-desc">對話・分類遊戲</div>
         </a>
 
-        <a href="math.html" class="card math">
+        <a href="math.html" class="card math" onclick="playClick()">
             <div class="card-icon">🧮</div>
             <div class="card-title">數學運算</div>
             <div class="card-desc">加減法・手寫計算</div>
         </a>
 
-        <a href="writing.html" class="card write">
+        <a href="writing.html?type=EN" class="card write-en" onclick="playClick()">
             <div class="card-icon">✍️</div>
-            <div class="card-title">字體工坊</div>
-            <div class="card-desc">筆順描紅・評分挑戰</div>
+            <div class="card-title">英文練字</div>
+            <div class="card-desc">ABC 筆順練習</div>
         </a>
 
-        <div class="card future">
-            <div class="card-icon">🚀</div>
-            <div class="card-title">即將推出</div>
-            <div class="card-desc">更多好玩的關卡</div>
-        </div>
-
+        <a href="writing.html?type=ZH" class="card write-zh" onclick="playClick()">
+            <div class="card-icon">ㄅ</div>
+            <div class="card-title">注音符號</div>
+            <div class="card-desc">ㄅㄆㄇ 手寫練習</div>
+        </a>
     </main>
+
+    <button id="music-toggle" onclick="toggleMusic()">🎵</button>
+
+    <script>
+        function toggleMusic() {
+            const isPlaying = toggleBGM();
+            document.getElementById('music-toggle').innerText = isPlaying ? "⏸️" : "🎵";
+            playClick();
+        }
+    </script>
 
 </body>
 </html>
