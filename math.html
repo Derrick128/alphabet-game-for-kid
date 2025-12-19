@@ -3,9 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>數學挑戰</title>
-    <script src="data.js"></script>
-    <script src="sound.js"></script>
+    <title>數學挑戰 - 穩定版</title>
+    
+    <script>
+        document.write('<script src="data.js?v=' + new Date().getTime() + '"><\/script>');
+        document.write('<script src="sound.js?v=' + new Date().getTime() + '"><\/script>');
+    </script>
+    
     <style>
         body { font-family: 'Arial Rounded MT Bold', sans-serif; background-color: #fff3e0; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; touch-action: none; }
         .container { width: 90%; max-width: 500px; background: white; padding: 20px; border-radius: 20px; text-align: center; border: 5px solid #d84315; box-sizing: border-box; position: relative; }
@@ -29,22 +33,21 @@
         .btn:active { transform: translateY(3px); box-shadow: none; }
         
         .btn-clear { background: #90a4ae; flex: 0.5; }
-        .btn-show { background: #ff9800; font-weight: bold;} /* 橘色看答案 */
+        .btn-show { background: #ff9800; font-weight: bold;} 
         
         .btn-yes { background: #66bb6a; display: none; }
         .btn-no { background: #ef5350; display: none; }
-
     </style>
 </head>
 <body>
     <div class="container">
         <div class="top-bar">
-            <a href="index.html" class="back-btn" onclick="playClick()">🏠</a>
+            <a href="index.html" class="back-btn" onclick="playClickSafe()">🏠</a>
             <div id="score-board" style="color:#555;">0/5</div>
         </div>
 
         <div id="level-title" style="color:#bf360c; font-weight:bold; margin-bottom:5px;">Level 1</div>
-        <div id="question-box">...</div>
+        <div id="question-box">載入中...</div>
 
         <div id="canvas-wrapper">
             <canvas id="writeCanvas"></canvas>
@@ -65,18 +68,29 @@
     </div>
 
     <script>
-        // 設定
-        const LEVELS_CONFIG = (typeof GAME_DATA !== 'undefined') ? GAME_DATA.MATH.LEVELS : {};
-        
+        // 安全播放音效 (防止 sound.js 沒載入報錯)
+        function playClickSafe() { if(typeof playClick === 'function') playClick(); }
+        function playSuccessSafe() { if(typeof playSuccess === 'function') playSuccess(); }
+
+        let LEVELS_CONFIG = {};
         let currentLevel = 1, score = 0, round = 0, currentAnswer = 0;
         const canvas = document.getElementById('writeCanvas');
         const ctx = canvas.getContext('2d');
         let isDrawing = false;
         
         function init() {
-            // 如果沒讀到 data.js，使用預設值防呆
-            if(Object.keys(LEVELS_CONFIG).length === 0) {
-                 LEVELS_CONFIG[1] = { title: "L1: 基礎運算", type: "ADD_CARRY", min: 1, max: 10 };
+            // 2. 防崩潰讀取：檢查 GAME_DATA 是否存在，以及 MATH 是否存在
+            if (typeof GAME_DATA !== 'undefined' && GAME_DATA.MATH && GAME_DATA.MATH.LEVELS) {
+                LEVELS_CONFIG = GAME_DATA.MATH.LEVELS;
+                console.log("成功讀取 data.js 設定");
+            } else {
+                console.warn("讀取失敗，使用內建預設值");
+                // 預設值 (Backup)
+                LEVELS_CONFIG = {
+                    1: { title: "L1: 基礎運算", type: "ADD_CARRY", min: 1, max: 10 },
+                    2: { title: "L2: 進階運算", type: "SUB_BORROW", min: 10, max: 20 },
+                    3: { title: "L3: 混合挑戰", type: "MIXED_3", min: 10, max: 20 }
+                };
             }
             
             resizeCanvas();
@@ -90,22 +104,20 @@
             document.getElementById('correct-text').innerText = currentAnswer;
             document.getElementById('answer-reveal').style.display = 'block';
             
-            // 切換按鈕
             document.getElementById('btn-show').style.display = 'none';
             document.getElementById('btn-clear').style.display = 'none';
             
             document.getElementById('btn-yes').style.display = 'block';
             document.getElementById('btn-no').style.display = 'block';
-            
-            if(typeof playClick === 'function') playClick();
+            playClickSafe();
         }
 
         function judge(isCorrect) {
             if(isCorrect) {
                 score++;
-                if(typeof playSuccess === 'function') playSuccess();
+                playSuccessSafe();
             } else {
-                if(typeof playClick === 'function') playClick();
+                playClickSafe();
             }
             nextQuestion();
         }
@@ -113,7 +125,9 @@
         // --- 遊戲邏輯 ---
         function startLevel() {
             score = 0; round = 0;
-            document.getElementById('level-title').innerText = LEVELS_CONFIG[currentLevel]?.title || "Level " + currentLevel;
+            // 安全讀取標題
+            const title = (LEVELS_CONFIG[currentLevel] && LEVELS_CONFIG[currentLevel].title) ? LEVELS_CONFIG[currentLevel].title : "Level " + currentLevel;
+            document.getElementById('level-title').innerText = title;
             nextQuestion();
         }
 
@@ -138,8 +152,6 @@
             document.getElementById('answer-reveal').style.display = 'none';
             document.getElementById('btn-yes').style.display = 'none';
             document.getElementById('btn-no').style.display = 'none';
-            
-            // 顯示原始按鈕
             document.getElementById('btn-show').style.display = 'block';
             document.getElementById('btn-clear').style.display = 'block';
 
@@ -150,6 +162,7 @@
         }
 
         function generateQuestion(level) {
+            // 安全讀取設定，如果沒有就給預設值
             let config = LEVELS_CONFIG[level] || { min: 10, max: 20, type: 'ADD_CARRY' };
             const { min, max, type } = config;
             
@@ -192,9 +205,10 @@
         }
         function clearCanvas() { 
             ctx.clearRect(0, 0, canvas.width, canvas.height); 
-            if(typeof playClick === 'function') playClick();
+            playClickSafe();
         }
 
+        // 啟動
         init();
     </script>
 </body>
