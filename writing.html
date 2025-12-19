@@ -206,7 +206,7 @@
         function setupCanvas() {
             drawCtx.lineCap = 'round';
             drawCtx.lineJoin = 'round';
-            drawCtx.lineWidth = 15; // 筆觸縮小
+            drawCtx.lineWidth = 10; // 筆觸縮小
             drawCtx.strokeStyle = '#333'; 
 
             const start = (e) => { e.preventDefault(); isDrawing = true; drawCtx.beginPath(); const {x, y} = getPos(e); drawCtx.moveTo(x, y); playClick(); };
@@ -264,7 +264,7 @@
             if (hitPixels === 0) { resultDisplay.innerText = "請先寫字喔！"; resultDisplay.style.color = "#555"; return; }
             
             let rawCoverage = (hitPixels / targetPixels) * 100;
-            let boostedScore = rawCoverage * 1.4; // 獎勵係數
+            let boostedScore = rawCoverage * 1.25; // 獎勵係數
             let penalty = (outsidePixels / targetPixels) * 100 * 0.1;
             
             let finalScore = Math.round(boostedScore - penalty);
@@ -298,3 +298,4 @@
     </script>
 </body>
 </html>
+
