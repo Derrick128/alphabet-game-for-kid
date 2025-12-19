@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>數學挑戰 - AI 辨識版</title>
+    <title>數學挑戰 - 雙模式版</title>
     <script src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'></script>
     <script src="data.js"></script>
     <script src="sound.js"></script>
@@ -15,27 +15,38 @@
         
         #question-box { font-size: 2.5em; margin: 10px 0; color: #e65100; font-weight: bold; min-height: 60px; }
         
-        /* 畫布背景必須是白色，不然 OCR 會誤判 */
+        /* 畫布 */
         #canvas-wrapper { position: relative; width: 100%; height: 250px; border: 4px dashed #ffab91; border-radius: 15px; margin-bottom: 10px; background: #fff; cursor: crosshair; }
         canvas { width: 100%; height: 100%; touch-action: none; border-radius: 10px; }
         
-        /* 狀態顯示區 */
-        #status-msg { height: 30px; margin: 10px 0; font-size: 1.2rem; font-weight: bold; color: #555; }
+        /* 狀態訊息 */
+        #status-msg { height: 30px; margin: 5px 0; font-size: 1rem; font-weight: bold; color: #777; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-        .btn-group { display: flex; gap: 10px; justify-content: center; margin-top: 10px; }
-        .btn { padding: 12px 20px; font-size: 1.2em; border: none; border-radius: 10px; color: white; cursor: pointer; flex: 1; box-shadow: 0 4px 0 rgba(0,0,0,0.2); transition: 0.2s; }
+        /* 按鈕群組 */
+        .btn-group { display: flex; gap: 10px; justify-content: center; margin-top: 10px; flex-wrap: wrap; }
+        .btn { padding: 12px 10px; font-size: 1.2em; border: none; border-radius: 10px; color: white; cursor: pointer; flex: 1; box-shadow: 0 4px 0 rgba(0,0,0,0.2); transition: 0.2s; min-width: 80px;}
         .btn:active { transform: translateY(3px); box-shadow: none; }
         
-        .btn-clear { background: #90a4ae; flex: 0.5; }
-        .btn-check { background: #ff9800; font-weight: bold; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .btn-clear { background: #90a4ae; flex: 0.6; }
+        /* AI 模式按鈕 */
+        .btn-check { background: #ff9800; font-weight: bold; display: flex; align-items: center; justify-content: center; gap: 10px; flex: 1.5; }
         
+        /* 手動模式按鈕 (預設隱藏) */
+        .manual-btns { display: none; width: 100%; gap: 10px; margin-top: 5px; }
+        .btn-show { background: #039be5; width: 100%; }
+        .btn-yes { background: #4caf50; }
+        .btn-no { background: #f44336; }
+
         /* 載入動畫 */
         .spinner {
-            border: 4px solid #f3f3f3; border-top: 4px solid #fff; border-radius: 50%;
-            width: 20px; height: 20px; animation: spin 1s linear infinite; display: none;
+            border: 4px solid #fff3e0; border-top: 4px solid #ff9800; border-radius: 50%;
+            width: 20px; height: 20px; animation: spin 1s linear infinite; display: inline-block; vertical-align: middle; margin-right: 5px;
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
+        /* 答案顯示區 */
+        #answer-reveal { display: none; margin: 10px 0; padding: 10px; background: #fff8e1; border-radius: 10px; }
+        .correct-ans { font-size: 2em; color: #2e7d32; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -46,150 +57,166 @@
             <div id="score-board" style="color:#555;">0/5</div>
         </div>
 
-        <div id="question-box">loading...</div>
+        <div id="question-box"><span class="spinner"></span> 啟動中...</div>
 
         <div id="canvas-wrapper">
             <canvas id="writeCanvas"></canvas>
             <div style="position: absolute; bottom: 5px; right: 5px; color: #ccc; font-size: 0.8em;">請寫下數字</div>
         </div>
 
-        <div id="status-msg"></div>
+        <div id="status-msg">正在呼叫 AI 小幫手...</div>
 
-        <div class="btn-group">
+        <div id="answer-reveal">
+            正確答案是：<span class="correct-ans" id="correct-text"></span>
+        </div>
+
+        <div class="btn-group" id="main-controls">
             <button class="btn btn-clear" onclick="clearCanvas()">橡皮擦</button>
+            
             <button id="btn-check" class="btn btn-check" onclick="recognizeHandwriting()">
-                <div class="spinner" id="loading-spin"></div>
-                <span id="btn-text">交卷 (AI 辨識)</span>
+                <span id="btn-text">交卷 (AI)</span>
             </button>
         </div>
-        <div id="hidden-ans" style="display:none; color:#ccc; margin-top:5px;"></div>
+
+        <div class="btn-group manual-btns" id="manual-controls">
+            <button id="btn-show" class="btn btn-show" onclick="showAnswer()">看答案</button>
+        </div>
+        <div class="btn-group manual-btns" id="judge-controls">
+            <button class="btn btn-yes" onclick="judge(true)">⭕ 答對</button>
+            <button class="btn btn-no" onclick="judge(false)">❌ 答錯</button>
+        </div>
     </div>
 
     <script>
-        // 1. 初始化資料
+        // 讀取設定
         const LEVELS_CONFIG = (typeof GAME_DATA !== 'undefined') ? GAME_DATA.MATH.LEVELS : {};
         
         let currentLevel = 1, score = 0, round = 0, currentAnswer = 0;
         const canvas = document.getElementById('writeCanvas');
         const ctx = canvas.getContext('2d');
         let isDrawing = false;
-        let worker = null; // Tesseract 工作核心
+        
+        // AI 相關變數
+        let worker = null;
+        let isAIMode = true; // 預設開啟 AI
 
         async function init() {
-            if(Object.keys(LEVELS_CONFIG).length === 0) {
-                // 如果沒有讀到 data.js 的備用方案
-                alert("找不到 data.js，將使用預設題目");
-            }
+            if(Object.keys(LEVELS_CONFIG).length === 0) { alert("找不到 data.js，將使用預設題目"); }
+            
             resizeCanvas();
             window.addEventListener('resize', resizeCanvas);
             setupCanvas();
-            
-            // 預先初始化 OCR 引擎 (加速第一次辨識)
-            document.getElementById('status-msg').innerText = "AI 引擎暖身中...";
-            worker = await Tesseract.createWorker('eng');
-            
-            // 設定只辨識數字 (白名單)
-            await worker.setParameters({
-                tessedit_char_whitelist: '0123456789'
-            });
-            
-            document.getElementById('status-msg').innerText = "";
+
+            // 嘗試載入 AI
+            try {
+                document.getElementById('status-msg').innerText = "正在下載 AI 腦袋 (0%)...";
+                
+                worker = await Tesseract.createWorker('eng', 1, {
+                    // 加入記錄器來顯示進度
+                    logger: m => {
+                        if(m.status === 'recognizing text') {
+                            document.getElementById('status-msg').innerText = `AI 思考中... ${(m.progress * 100).toFixed(0)}%`;
+                        } else if(m.status === 'loading tesseract core') {
+                             document.getElementById('status-msg').innerText = "載入核心中...";
+                        } else if(m.status === 'loading language traineddata') {
+                             // 顯示下載進度
+                             const p = (m.progress * 100).toFixed(0);
+                             document.getElementById('status-msg').innerText = `下載 AI 資料庫... ${p}%`;
+                        }
+                    }
+                });
+
+                // 設定白名單
+                await worker.setParameters({ tessedit_char_whitelist: '0123456789' });
+                
+                document.getElementById('status-msg').innerText = "AI 準備好了！";
+                setTimeout(() => document.getElementById('status-msg').innerText = "", 1000);
+
+            } catch (err) {
+                console.error("AI 載入失敗:", err);
+                // ⚠️ 如果失敗，自動切換到手動模式
+                switchToManualMode("⚠️ AI 載入太久，已切換至手動模式");
+            }
+
             startLevel();
         }
 
-        // --- 核心：AI 辨識邏輯 ---
+        function switchToManualMode(msg) {
+            isAIMode = false;
+            document.getElementById('status-msg').innerText = msg;
+            document.getElementById('btn-check').style.display = 'none'; // 隱藏 AI 按鈕
+            document.getElementById('manual-controls').style.display = 'flex'; // 顯示看答案按鈕
+        }
+
+        // --- AI 辨識邏輯 ---
         async function recognizeHandwriting() {
+            if(!worker) return;
             const btn = document.getElementById('btn-check');
-            const spin = document.getElementById('loading-spin');
             const txt = document.getElementById('btn-text');
             const status = document.getElementById('status-msg');
 
-            // 1. UI 變更：顯示載入中
             btn.disabled = true;
-            btn.style.background = "#ccc";
-            spin.style.display = "block";
-            txt.innerText = "辨識中...";
-            status.innerText = "🤔 AI 正在看你寫什麼...";
-            playClick(); // 音效
+            btn.style.opacity = "0.7";
+            txt.innerText = "⏳ 辨識中...";
+            playClick();
 
             try {
-                // 2. 處理圖片：必須將背景轉為純白 (Canvas 預設透明，轉圖會變黑，OCR 會失敗)
                 const dataURL = getCanvasWithWhiteBackground();
-
-                // 3. 執行辨識
                 const { data: { text } } = await worker.recognize(dataURL);
                 
-                // 4. 清理結果 (去除空白與換行)
                 let recognizedNum = text.trim();
-                console.log("AI 看到:", recognizedNum); // 除錯用
-
-                // 5. 判定結果
+                
                 if (recognizedNum === "") {
-                    status.innerText = "❓ 沒看到數字，再寫清楚一點？";
-                    playAudio && playClick(); // 提示音
+                    status.innerText = "❓ 沒看到數字，寫大一點？";
+                    playAudio && playClick();
                 } else if (parseInt(recognizedNum) === currentAnswer) {
                     status.innerText = `✅ 答對了！是 ${recognizedNum}`;
                     status.style.color = "green";
                     if(typeof playSuccess === 'function') playSuccess();
                     score++;
                     setTimeout(nextQuestion, 1500);
-                    return; // 結束
+                    return; 
                 } else {
-                    status.innerText = `❌ 這是 ${recognizedNum} 嗎？答案不對喔`;
+                    status.innerText = `❌ 這是 ${recognizedNum} 嗎？不對喔`;
                     status.style.color = "red";
                     if(typeof playClick === 'function') playClick();
                 }
-
             } catch (err) {
-                console.error(err);
-                status.innerText = "⚠️ AI 累了，請重試";
+                status.innerText = "⚠️ 辨識失敗，請用手動對答案";
+                switchToManualMode("AI 發生錯誤，請手動核對");
             } finally {
-                // 6. 恢復 UI
                 btn.disabled = false;
-                btn.style.background = "#ff9800";
-                spin.style.display = "none";
-                txt.innerText = "交卷 (AI 辨識)";
+                btn.style.opacity = "1";
+                txt.innerText = "交卷 (AI)";
             }
         }
 
-        // 輔助：將透明 Canvas 轉為白底圖片
-        function getCanvasWithWhiteBackground() {
-            const w = canvas.width;
-            const h = canvas.height;
-            
-            // 建立一個臨時 Canvas
-            const tempCanvas = document.createElement('canvas');
-            tempCanvas.width = w;
-            tempCanvas.height = h;
-            const tCtx = tempCanvas.getContext('2d');
-
-            // 填滿白色背景
-            tCtx.fillStyle = '#ffffff';
-            tCtx.fillRect(0, 0, w, h);
-            
-            // 把原本的筆跡畫上去
-            tCtx.drawImage(canvas, 0, 0);
-            
-            return tempCanvas.toDataURL('image/png');
+        // --- 手動模式邏輯 ---
+        function showAnswer() {
+            document.getElementById('correct-text').innerText = currentAnswer;
+            document.getElementById('answer-reveal').style.display = 'block';
+            document.getElementById('manual-controls').style.display = 'none'; // 隱藏看答案
+            document.getElementById('judge-controls').style.display = 'flex';  // 顯示對錯按鈕
+            document.querySelector('.btn-clear').style.display = 'none';     // 鎖定畫布
         }
 
-        // --- 遊戲流程 (與之前相似) ---
+        function judge(isCorrect) {
+            if(isCorrect) score++;
+            nextQuestion();
+        }
 
-        // (備用) 如果 data.js 壞掉的預設產生器
+        // --- 通用遊戲流程 ---
         function generateQuestion(level) {
             let config = LEVELS_CONFIG[level];
-            if(!config) config = { min: 10, max: 20, type: 'ADD' }; // Fallback
-            
+            if(!config) config = { min: 10, max: 20, type: 'ADD_CARRY' }; 
             const { min, max, type } = config;
             
             if (type === 'ADD_CARRY') {
-                let a = r(min, max); 
-                let b = r(5, 9);
+                let a = r(min, max); let b = r(5, 9);
                 while((a%10) + b < 10) b++;
                 return { q: `${a} + ${b} = ?`, a: a+b };
             } else if (type === 'SUB_BORROW') {
-                let a = r(min, max);
-                let b = r(5, 9);
+                let a = r(min, max); let b = r(5, 9);
                 while((a%10) >= b) a = r(min, max);
                 return { q: `${a} - ${b} = ?`, a: a-b };
             } else {
@@ -222,32 +249,48 @@
             round++;
             document.getElementById('score-board').innerText = `題數: ${round}/5 (得分: ${score})`;
             
+            // 重置 UI
             clearCanvas();
-            document.getElementById('status-msg').innerText = "";
+            document.getElementById('status-msg').innerText = isAIMode ? "AI 準備就緒" : "";
             document.getElementById('status-msg').style.color = "#555";
+            document.getElementById('answer-reveal').style.display = 'none';
+
+            // 根據模式顯示按鈕
+            if (isAIMode) {
+                document.getElementById('btn-check').style.display = 'flex';
+                document.getElementById('manual-controls').style.display = 'none';
+                document.getElementById('judge-controls').style.display = 'none';
+            } else {
+                document.getElementById('btn-check').style.display = 'none';
+                document.getElementById('manual-controls').style.display = 'flex';
+                document.getElementById('judge-controls').style.display = 'none';
+            }
+            document.querySelector('.btn-clear').style.display = 'block';
 
             const qData = generateQuestion(currentLevel);
             document.getElementById('question-box').innerText = qData.q;
             currentAnswer = qData.a;
-            
-            // 偷看答案 (Debug用)
-            document.getElementById('hidden-ans').innerText = currentAnswer;
         }
 
-        // --- 畫布設定 ---
+        // --- 畫布功能 ---
+        function getCanvasWithWhiteBackground() {
+            const w = canvas.width; const h = canvas.height;
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = w; tempCanvas.height = h;
+            const tCtx = tempCanvas.getContext('2d');
+            tCtx.fillStyle = '#ffffff'; tCtx.fillRect(0, 0, w, h);
+            tCtx.drawImage(canvas, 0, 0);
+            return tempCanvas.toDataURL('image/png');
+        }
+
         function resizeCanvas() {
             canvas.width = canvas.parentElement.clientWidth;
             canvas.height = canvas.parentElement.clientHeight;
             setupCtx();
         }
-
         function setupCtx() {
-            ctx.lineWidth = 8; // 筆觸粗一點，AI 比較好認
-            ctx.lineCap = 'round'; 
-            ctx.lineJoin = 'round'; 
-            ctx.strokeStyle = 'black'; // 黑色對比最強
+            ctx.lineWidth = 10; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.strokeStyle = 'black';
         }
-
         function setupCanvas() {
             setupCtx();
             const start = (e) => { e.preventDefault(); isDrawing = true; ctx.beginPath(); const {x,y} = pos(e); ctx.moveTo(x,y); };
@@ -265,11 +308,10 @@
         }
         function clearCanvas() { 
             ctx.clearRect(0, 0, canvas.width, canvas.height); 
-            document.getElementById('status-msg').innerText = "";
+            if(isAIMode) document.getElementById('status-msg').innerText = "";
             playClick();
         }
 
-        // 啟動
         init();
     </script>
 </body>
