@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>練字小教室</title>
     <script src="data.js"></script>
+    <script src="sound.js"></script>
     <style>
-        /* (樣式保持不變) */
         body { font-family: 'Arial', sans-serif; background-color: #f1f8e9; margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; overflow: hidden; touch-action: none; }
         .top-bar { width: 100%; padding: 15px; background: white; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; box-sizing: border-box; }
         .back-btn { padding: 8px 15px; background: #bdbdbd; color: white; border: none; border-radius: 8px; font-weight: bold; text-decoration: none; font-size: 1.2rem; }
@@ -22,14 +22,19 @@
         .btn-clear { background-color: #ef5350; }
         .btn-check { background-color: #26a69a; flex: 1.5; font-size: 1.4rem; } 
         .btn-case { background-color: #ffa726; }
+        .hidden { display: none !important; }
         #result-display { margin-top: 10px; font-size: 2.2rem; font-weight: bold; color: #333; height: 50px; text-align: center; }
+        
+        /* 音樂按鈕 (縮小版) */
+        #mini-music { position: absolute; top: 15px; right: 15px; font-size: 1.2rem; cursor: pointer; background:none; border:none;}
     </style>
 </head>
 <body>
+
     <div class="top-bar">
-        <a href="index.html" class="back-btn">🏠</a>
+        <a href="index.html" class="back-btn" onclick="playClick()">🏠</a>
         <h2 id="current-letter">練習: A</h2>
-        <div style="width: 40px;"></div> 
+        <button id="mini-music" onclick="toggleMusic()">🎵</button>
     </div>
 
     <div id="canvas-container">
@@ -41,7 +46,7 @@
 
     <div class="controls">
         <button class="btn btn-nav" onclick="changeLetter(-1)">◀</button>
-        <button class="btn btn-case" onclick="toggleCase()">Aa</button>
+        <button class="btn btn-case" id="case-btn" onclick="toggleCase()">Aa</button>
         <button class="btn btn-nav" onclick="changeLetter(1)">▶</button>
     </div>
     <div class="controls" style="margin-top:15px;">
@@ -50,7 +55,18 @@
     </div>
 
     <script>
-        const letters = GAME_DATA.WRITING.LETTERS; // 讀取字母清單
+        // 1. 取得網址參數 (判斷是 EN 還是 ZH)
+        const urlParams = new URLSearchParams(window.location.search);
+        const mode = urlParams.get('type') || 'EN'; // 預設英文
+
+        let letters = [];
+        if (mode === 'ZH') {
+            letters = GAME_DATA.WRITING.ZH;
+            document.getElementById('case-btn').classList.add('hidden'); // 注音沒有大小寫
+        } else {
+            letters = GAME_DATA.WRITING.EN;
+        }
+
         let currentIndex = 0;
         let isUpper = true;
         let isDrawing = false;
@@ -64,31 +80,40 @@
 
         function init() {
             if(typeof GAME_DATA === 'undefined') { alert("請確認 data.js 存在"); return; }
+            
             drawCtx.lineCap = 'round';
             drawCtx.lineJoin = 'round';
-            drawCtx.lineWidth = 30; 
+            drawCtx.lineWidth = 15; // 🖌️ 修改處：筆觸變細 (原30 -> 15)
             drawCtx.strokeStyle = '#333'; 
+            
             renderTemplate();
             setupEvents();
         }
 
-        // ... (其他函式保持不變，因為它們是 UI 邏輯，不涉及資料內容) ...
-        
         function renderTemplate() {
             bgCtx.clearRect(0, 0, canvasSize, canvasSize);
             let char = letters[currentIndex];
-            if (!isUpper) char = char.toLowerCase();
+            if (mode === 'EN' && !isUpper) char = char.toLowerCase();
+            
             document.getElementById('current-letter').innerText = `練習: ${char}`;
+            
+            // 畫格線
             bgCtx.strokeStyle = '#e1f5fe'; bgCtx.lineWidth = 2; bgCtx.beginPath();
             bgCtx.moveTo(0, canvasSize/2); bgCtx.lineTo(canvasSize, canvasSize/2);
             bgCtx.moveTo(canvasSize/2, 0); bgCtx.lineTo(canvasSize/2, canvasSize);
             bgCtx.stroke();
-            bgCtx.font = "200px Arial"; bgCtx.textAlign = "center"; bgCtx.textBaseline = "middle";
-            bgCtx.fillStyle = "#cfd8dc"; bgCtx.fillText(char, canvasSize/2, canvasSize/2 + 15);
+            
+            // 畫範本字
+            bgCtx.font = "200px Arial"; 
+            if(mode === 'ZH') bgCtx.font = "180px Microsoft JhengHei"; // 注音字體微調
+
+            bgCtx.textAlign = "center"; bgCtx.textBaseline = "middle";
+            bgCtx.fillStyle = "#cfd8dc"; 
+            bgCtx.fillText(char, canvasSize/2, canvasSize/2 + 15);
         }
 
         function setupEvents() {
-            const start = (e) => { e.preventDefault(); isDrawing = true; drawCtx.beginPath(); const {x, y} = getPos(e); drawCtx.moveTo(x, y); };
+            const start = (e) => { e.preventDefault(); isDrawing = true; drawCtx.beginPath(); const {x, y} = getPos(e); drawCtx.moveTo(x, y); playClick(); }; // 點下去也有聲音
             const move = (e) => { if (!isDrawing) return; e.preventDefault(); const {x, y} = getPos(e); drawCtx.lineTo(x, y); drawCtx.stroke(); };
             const end = () => isDrawing = false;
             drawCanvas.addEventListener('mousedown', start); drawCanvas.addEventListener('mousemove', move);
@@ -114,23 +139,43 @@
             }
             if (targetPixels === 0) return;
             if (hitPixels === 0) { resultDisplay.innerText = "請先寫字喔！"; resultDisplay.style.color = "#555"; return; }
+            
             let rawCoverage = (hitPixels / targetPixels) * 100;
-            let boostedScore = rawCoverage * 1.2;
+            
+            // 🖌️ 修改處：因為筆變細了，覆蓋率會下降，所以提高獎勵係數 (1.2 -> 1.4)
+            let boostedScore = rawCoverage * 1.4; 
+            
             let penalty = (outsidePixels / targetPixels) * 100 * 0.1;
             let finalScore = Math.round(boostedScore - penalty);
             if (finalScore > 100) finalScore = 100; if (finalScore < 0) finalScore = 0;
+            
             let msg = "", color = "";
-            if (finalScore === 100) { msg = "🌟 100分！完美！"; color = "#2e7d32"; }
-            else if (finalScore >= 90) { msg = "😍 " + finalScore + "分！太棒了！"; color = "#43a047"; }
-            else if (finalScore >= 80) { msg = "😊 " + finalScore + "分！很不錯！"; color = "#f57f17"; }
-            else if (finalScore >= 60) { msg = "🙂 " + finalScore + "分！加油！"; color = "#fb8c00"; }
-            else { msg = "🤔 " + finalScore + "分，再試試！"; color = "#d84315"; }
+            if (finalScore === 100) { msg = "🌟 100分！完美！"; color = "#2e7d32"; playSuccess(); } // 滿分播放成功音效
+            else if (finalScore >= 90) { msg = "😍 " + finalScore + "分！太棒了！"; color = "#43a047"; playSuccess(); }
+            else if (finalScore >= 80) { msg = "😊 " + finalScore + "分！很不錯！"; color = "#f57f17"; playClick(); }
+            else { msg = "🤔 " + finalScore + "分，再試試！"; color = "#d84315"; playClick(); }
+            
             resultDisplay.innerText = msg; resultDisplay.style.color = color;
         }
 
-        function clearCanvas() { drawCtx.clearRect(0, 0, canvasSize, canvasSize); resultDisplay.innerText = ""; }
-        function changeLetter(dir) { currentIndex += dir; if (currentIndex < 0) currentIndex = 25; if (currentIndex > 25) currentIndex = 0; clearCanvas(); renderTemplate(); }
-        function toggleCase() { isUpper = !isUpper; clearCanvas(); renderTemplate(); }
+        function clearCanvas() { drawCtx.clearRect(0, 0, canvasSize, canvasSize); resultDisplay.innerText = ""; playClick(); }
+        
+        function changeLetter(dir) { 
+            currentIndex += dir; 
+            if (currentIndex < 0) currentIndex = letters.length - 1; 
+            if (currentIndex >= letters.length) currentIndex = 0; 
+            clearCanvas(); 
+            renderTemplate(); 
+            playClick();
+        }
+        
+        function toggleCase() { isUpper = !isUpper; clearCanvas(); renderTemplate(); playClick(); }
+
+        // 音樂控制
+        function toggleMusic() {
+            const isPlaying = toggleBGM();
+            document.getElementById('mini-music').innerText = isPlaying ? "⏸️" : "🎵";
+        }
 
         init();
     </script>
