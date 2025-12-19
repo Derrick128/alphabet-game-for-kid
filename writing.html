@@ -206,7 +206,7 @@
         function setupCanvas() {
             drawCtx.lineCap = 'round';
             drawCtx.lineJoin = 'round';
-            drawCtx.lineWidth = 10; // 筆觸縮小
+            drawCtx.lineWidth = 13; // 筆觸縮小
             drawCtx.strokeStyle = '#333'; 
 
             const start = (e) => { e.preventDefault(); isDrawing = true; drawCtx.beginPath(); const {x, y} = getPos(e); drawCtx.moveTo(x, y); playClick(); };
@@ -298,4 +298,5 @@
     </script>
 </body>
 </html>
+
 
