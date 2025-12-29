@@ -46,7 +46,7 @@ let GAME_DATA = {
         return;
     }
 
-    const BASE_URL = `https://docs.google.com/spreadsheets/d/e/${CLOUD_CONFIG.SHEET_ID}/pub?gid=`;
+    const BASE_URL = `https://docs.google.com/spreadsheets/d/${CLOUD_CONFIG.SHEET_ID}/pub?gid=`;
     const FORMAT = "&single=true&output=csv";
 
     // CSV 解析工具
