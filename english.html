@@ -6,7 +6,7 @@
     <title>英文聽力互動</title>
     <script src="data.js"></script>
     <style>
-        /* --- 樣式表 (保持不變) --- */
+        /* (樣式保持不變) */
         body { font-family: 'Arial Rounded MT Bold', sans-serif; background-color: #e3f2fd; margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; touch-action: manipulation; }
         .container { width: 95%; max-width: 600px; padding: 15px; box-sizing: border-box; display: flex; flex-direction: column; gap: 15px; }
         .top-bar { display: flex; justify-content: space-between; align-items: center; width: 100%; background: white; padding: 10px 15px; border-radius: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); box-sizing: border-box; }
@@ -45,7 +45,7 @@
 
         <div id="question-area">
             <div class="main-speaker" onclick="playQuestion()">🔊</div>
-            <div class="question-text" id="q-text">點擊喇叭聽題目</div>
+            <div class="question-text" id="q-text">準備中...</div>
         </div>
 
         <div id="options-grid"></div>
@@ -53,31 +53,48 @@
     <div id="feedback-msg">太棒了！</div>
 
     <script>
-        // 從 GAME_DATA (data.js) 讀取資料
-        const QA_DATA = GAME_DATA.ENGLISH.QA_LIST;
-        const SORT_DATA = GAME_DATA.ENGLISH.SORT_LIST;
-
         let currentMode = 'QA';
         let currentItem = null;
 
-        function init() {
-            // 檢查是否成功讀取 data.js
-            if(typeof GAME_DATA === 'undefined') {
-                alert("錯誤：找不到 data.js，請確認檔案是否在同一資料夾。");
+        // 🔴 關鍵修改：改成 async function，才能使用 await
+        async function init() {
+            // 1. 顯示載入中
+            document.getElementById('q-text').innerText = "正在下載題庫...";
+            
+            // 2. 等待 data.js 去 Google 抓資料
+            if (GAME_DATA && GAME_DATA.loadFromCloud) {
+                await GAME_DATA.loadFromCloud();
+            }
+
+            // 3. 資料抓完了，檢查有沒有抓到
+            if (GAME_DATA.ENGLISH.QA_LIST.length === 0) {
+                document.getElementById('q-text').innerText = "⚠️ 沒抓到題目 (請檢查網址)";
                 return;
             }
+
+            // 4. 開始遊戲
             switchMode('QA');
         }
 
         function switchMode(mode) {
             currentMode = mode;
             document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
-            if(mode === 'QA') {
+            
+            // 檢查該模式有沒有資料
+            if (mode === 'QA') {
                 document.querySelector('.mode-qa').classList.add('active');
                 document.getElementById('options-grid').classList.remove('grid-mode');
+                if (GAME_DATA.ENGLISH.QA_LIST.length === 0) {
+                    alert("QA 題庫是空的！");
+                    return;
+                }
             } else {
                 document.querySelector('.mode-sort').classList.add('active');
                 document.getElementById('options-grid').classList.add('grid-mode');
+                if (GAME_DATA.ENGLISH.SORT_LIST.length === 0) {
+                    alert("分類題庫是空的！");
+                    return;
+                }
             }
             loadLevel();
         }
@@ -87,7 +104,8 @@
             grid.innerHTML = ''; 
             
             if (currentMode === 'QA') {
-                currentItem = QA_DATA[Math.floor(Math.random() * QA_DATA.length)];
+                const list = GAME_DATA.ENGLISH.QA_LIST;
+                currentItem = list[Math.floor(Math.random() * list.length)];
                 document.getElementById('q-text').innerText = currentItem.q;
                 
                 let options = [currentItem.a, ...currentItem.wrong];
@@ -110,14 +128,19 @@
                 setTimeout(() => playAudio(currentItem.q), 500);
 
             } else {
-                currentItem = SORT_DATA[Math.floor(Math.random() * SORT_DATA.length)];
-                document.getElementById('q-text').innerText = "找出屬於 " + currentItem.theme;
+                const list = GAME_DATA.ENGLISH.SORT_LIST;
+                currentItem = list[Math.floor(Math.random() * list.length)];
+                // 處理主題名稱，只唸前面的英文
+                const themeName = currentItem.theme.includes(':') ? currentItem.theme.split(':')[1] : currentItem.theme;
+                const cleanTheme = themeName.split('(')[0]; // 去掉中文
+
+                document.getElementById('q-text').innerText = "找出: " + currentItem.theme;
                 
                 let allWords = [...currentItem.targets, ...currentItem.decoys];
                 allWords.sort(() => Math.random() - 0.5);
                 currentItem.remaining = currentItem.targets.length;
 
-                setTimeout(() => playAudio("Find words for " + currentItem.theme.split(':')[0]), 500);
+                setTimeout(() => playAudio("Find " + cleanTheme), 500);
 
                 allWords.forEach(word => {
                     createCard(word, (card) => {
@@ -168,7 +191,10 @@
 
         function playQuestion() {
             if(currentMode === 'QA') playAudio(currentItem.q);
-            else playAudio("Find words for " + currentItem.theme.split(':')[0]);
+            else {
+                 const themeName = currentItem.theme.includes(':') ? currentItem.theme.split(':')[1] : currentItem.theme;
+                 playAudio("Find " + themeName.split('(')[0]);
+            }
         }
 
         function playAudio(text) {
