@@ -26,36 +26,41 @@ let GAME_DATA = {
     WRITING: {
         EN: ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"],
         ZH: ["ㄅ", "ㄆ", "ㄇ", "ㄈ", "ㄉ", "ㄊ", "ㄋ", "ㄌ", "ㄍ", "ㄎ", "ㄏ", "ㄐ", "ㄑ", "ㄒ", "ㄓ", "ㄔ", "ㄕ", "ㄖ", "ㄗ", "ㄘ", "ㄙ", "ㄧ", "ㄨ", "ㄩ", "ㄚ", "ㄛ", "ㄜ", "ㄝ", "ㄞ", "ㄟ", "ㄠ", "ㄡ", "ㄢ", "ㄣ", "ㄤ", "ㄥ", "ㄦ"]
-    }
+    },
+    // 🔴 新增：提供載入函數讓 HTML 可以呼叫
+    loadFromCloud: null,
+    isLoaded: false
 };
 
-// 雲端同步程式
-(async function syncData() {
-    console.log("☁️ 連線中 (雙連結模式)...");
+// CSV 解析器
+const parseCSV = (text) => {
+    const rows = text.split('\n').map(r => r.trim()).filter(r => r);
+    if (rows.length < 2) return [];
+    const headers = rows[0].split(',').map(h => h.trim());
+    const result = [];
+    for (let i = 1; i < rows.length; i++) {
+        const cols = rows[i].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c => c.replace(/^"|"$/g, '').trim());
+        let obj = {};
+        headers.forEach((h, idx) => obj[h] = cols[idx] || "");
+        result.push(obj);
+    }
+    return result;
+};
 
-    // CSV 解析器
-    const parseCSV = (text) => {
-        const rows = text.split('\n').map(r => r.trim()).filter(r => r);
-        if (rows.length < 2) return [];
-        const headers = rows[0].split(',').map(h => h.trim());
-        const result = [];
-        for (let i = 1; i < rows.length; i++) {
-            const cols = rows[i].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(c => c.replace(/^"|"$/g, '').trim());
-            let obj = {};
-            headers.forEach((h, idx) => obj[h] = cols[idx] || "");
-            result.push(obj);
-        }
-        return result;
-    };
+// 🔴 把載入邏輯包成可呼叫的 async function
+GAME_DATA.loadFromCloud = async function() {
+    console.log("☁️ 連線中 (雙連結模式)...");
 
     try {
         // 1. 下載 QA
         if (CLOUD_URLS.QA && CLOUD_URLS.QA.startsWith("http")) {
             console.log("📥 下載 QA...");
-            // 加個時間戳記避免快取
             const resQA = await fetch(CLOUD_URLS.QA + "&t=" + new Date().getTime());
             if (resQA.ok) {
-                const cleanQA = parseCSV(await resQA.text()).map(r => ({
+                const text = await resQA.text();
+                console.log("📄 QA 原始資料前100字:", text.substring(0, 100));
+                
+                const cleanQA = parseCSV(text).map(r => ({
                     q: r.question || r.q, 
                     a: r.answer || r.a,
                     wrong: [r.wrong1, r.wrong2].filter(w => w)
@@ -64,7 +69,12 @@ let GAME_DATA = {
                 if (cleanQA.length > 0) {
                     GAME_DATA.ENGLISH.QA_LIST = cleanQA;
                     console.log(`✅ QA 載入成功: ${cleanQA.length} 題`);
+                    console.log("第一題範例:", cleanQA[0]);
+                } else {
+                    console.warn("⚠️ QA 解析後沒有有效題目");
                 }
+            } else {
+                console.error("❌ QA 下載失敗:", resQA.status);
             }
         }
 
@@ -73,7 +83,10 @@ let GAME_DATA = {
             console.log("📥 下載 Sort...");
             const resSort = await fetch(CLOUD_URLS.SORT + "&t=" + new Date().getTime());
             if (resSort.ok) {
-                const cleanSort = parseCSV(await resSort.text()).map(r => ({
+                const text = await resSort.text();
+                console.log("📄 Sort 原始資料前100字:", text.substring(0, 100));
+                
+                const cleanSort = parseCSV(text).map(r => ({
                     theme: r.theme,
                     targets: r.targets ? r.targets.split(',').map(s => s.trim()) : [],
                     decoys: r.decoys ? r.decoys.split(',').map(s => s.trim()) : []
@@ -82,12 +95,22 @@ let GAME_DATA = {
                 if (cleanSort.length > 0) {
                     GAME_DATA.ENGLISH.SORT_LIST = cleanSort;
                     console.log(`✅ Sort 載入成功: ${cleanSort.length} 組`);
+                    console.log("第一組範例:", cleanSort[0]);
+                } else {
+                    console.warn("⚠️ Sort 解析後沒有有效題目");
                 }
+            } else {
+                console.error("❌ Sort 下載失敗:", resSort.status);
             }
         }
 
+        GAME_DATA.isLoaded = true;
+        console.log("🎉 資料載入完成！");
+
     } catch (e) {
         console.error("❌ 連線錯誤:", e);
-        if(window.location.protocol === 'file:') alert("⚠️ 請勿直接開啟檔案，可能會被瀏覽器擋住。");
+        if(window.location.protocol === 'file:') {
+            alert("⚠️ 請勿直接開啟檔案，需透過網頁伺服器執行（例如 Live Server）");
+        }
     }
-})();
+};
