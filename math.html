@@ -21,7 +21,7 @@
         #canvas-wrapper { position: relative; width: 100%; height: 250px; border: 4px dashed #ffab91; border-radius: 15px; margin-bottom: 10px; background: #fff; cursor: crosshair; }
         canvas { width: 100%; height: 100%; touch-action: none; border-radius: 10px; }
         
-        #status-bar { height: 20px; font-size: 0.8rem; color: #999; margin-bottom: 5px; font-weight: bold; transition: color 0.3s;}
+        #status-bar { height: 30px; font-size: 0.85rem; color: #999; margin-bottom: 5px; font-weight: bold; transition: color 0.3s; line-height: 1.3;}
 
         #answer-reveal { display: none; margin: 10px 0; padding: 15px; background: #fff8e1; border-radius: 10px; border: 2px solid #ffecb3; }
         .correct-ans { font-size: 2.2em; color: #2e7d32; font-weight: bold; }
@@ -29,6 +29,7 @@
         .btn-group { display: flex; gap: 10px; justify-content: center; margin-top: 10px; flex-wrap: wrap; }
         .btn { padding: 12px 0; font-size: 1.2em; border: none; border-radius: 10px; color: white; cursor: pointer; flex: 1; box-shadow: 0 4px 0 rgba(0,0,0,0.2); transition: 0.1s; }
         .btn:active { transform: translateY(3px); box-shadow: none; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
         
         .btn-clear { background: #90a4ae; flex: 0.6; }
         .btn-show { background: #039be5; font-weight: bold; display: block; }
@@ -39,6 +40,8 @@
 
         .spinner { border: 3px solid #ffffff40; border-top: 3px solid #fff; border-radius: 50%; width: 16px; height: 16px; animation: spin 1s linear infinite; display: inline-block; vertical-align: middle; margin-right: 5px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        .skip-ai { font-size: 0.75em; color: #666; text-decoration: underline; cursor: pointer; margin-top: 5px; }
     </style>
 </head>
 <body>
@@ -56,7 +59,10 @@
             <div style="position: absolute; bottom: 5px; right: 5px; color: #eee; font-size: 0.8em; pointer-events: none;">在此書寫</div>
         </div>
 
-        <div id="status-bar">正在呼叫 AI 小幫手...</div>
+        <div id="status-bar">
+            正在載入 AI 小幫手...
+            <div class="skip-ai" id="skip-ai" style="display:none;" onclick="skipAI()">⏭️ 跳過 AI，直接開始</div>
+        </div>
 
         <div id="answer-reveal">
             正確答案：<span class="correct-ans" id="correct-text"></span>
@@ -81,11 +87,11 @@
         // 音效安全播放
         function playClickSafe() { 
             try { if(typeof playClick === 'function') playClick(); } 
-            catch(e) { console.log('音效未載入'); } 
+            catch(e) { } 
         }
         function playSuccessSafe() { 
             try { if(typeof playSuccess === 'function') playSuccess(); } 
-            catch(e) { console.log('音效未載入'); } 
+            catch(e) { } 
         }
 
         // 1. 安全初始化變數
@@ -98,6 +104,7 @@
         // AI 變數
         let worker = null;
         let isAIReady = false;
+        let aiLoadTimeout = null;
 
         function init() {
             console.log("🚀 數學遊戲初始化...");
@@ -120,52 +127,105 @@
             resizeCanvas();
             window.addEventListener('resize', resizeCanvas);
             setupCanvas();
-            startLevel(); // 遊戲馬上開始，不等待 AI
-
-            // 背景啟動 AI
+            
+            // 🔴 先不開始遊戲，等 AI 載入或超時
+            document.getElementById('question-box').innerText = "載入中...";
+            
+            // 背景啟動 AI，設定 15 秒超時
             initAI();
+            
+            // 15 秒後如果還沒載入，自動跳過
+            aiLoadTimeout = setTimeout(() => {
+                if (!isAIReady) {
+                    console.log("⏱️ AI 載入超時，自動切換手動模式");
+                    skipAI();
+                }
+            }, 15000);
+            
+            // 5 秒後顯示跳過按鈕
+            setTimeout(() => {
+                if (!isAIReady) {
+                    document.getElementById('skip-ai').style.display = 'block';
+                }
+            }, 5000);
+        }
+
+        function skipAI() {
+            if (aiLoadTimeout) clearTimeout(aiLoadTimeout);
+            isAIReady = false;
+            document.getElementById('status-bar').innerText = "👌 使用手動對答模式";
+            document.getElementById('status-bar').style.color = "#666";
+            document.getElementById('skip-ai').style.display = 'none';
+            document.getElementById('btn-show').style.display = 'block';
+            document.getElementById('btn-ai').style.display = 'none';
+            startLevel(); // 開始遊戲
         }
 
         async function initAI() {
             try {
+                // 檢查 Tesseract 是否載入
                 if (typeof Tesseract === 'undefined') {
-                    console.log("⚠️ Tesseract 未載入（可能沒網路）");
-                    return;
+                    console.log("⚠️ Tesseract CDN 未載入");
+                    throw new Error("Tesseract not loaded");
                 }
 
-                document.getElementById('status-bar').innerText = "AI 腦袋下載中...";
+                console.log("📥 開始載入 AI 模型...");
+                document.getElementById('status-bar').innerText = "AI 腦袋下載中... 0%";
                 
-                worker = await Tesseract.createWorker('eng', 1, {
+                // 設定更短的超時時間
+                const workerPromise = Tesseract.createWorker('eng', 1, {
                     logger: m => {
                         if (m.status && m.status.includes('loading')) {
                             const p = m.progress ? Math.floor(m.progress * 100) : 0;
-                            if(p % 10 === 0) {
-                                document.getElementById('status-bar').innerText = `AI 下載中... ${p}%`;
-                            }
+                            document.getElementById('status-bar').innerText = `AI 下載中... ${p}%`;
+                            console.log(`AI 載入進度: ${p}%`);
                         }
-                    }
+                    },
+                    // 🔴 增加這個設定，使用較快的 CDN
+                    langPath: 'https://tessdata.projectnaptha.com/4.0.0'
                 });
                 
+                // 10 秒超時保護
+                const timeoutPromise = new Promise((_, reject) => 
+                    setTimeout(() => reject(new Error('Worker creation timeout')), 10000)
+                );
+                
+                worker = await Promise.race([workerPromise, timeoutPromise]);
+                console.log("✅ Worker 創建成功");
+                
                 // 設定白名單 (只認數字)
-                await worker.setParameters({ tessedit_char_whitelist: '0123456789' });
+                await worker.setParameters({ 
+                    tessedit_char_whitelist: '0123456789',
+                    tessedit_pageseg_mode: '8' // 單字模式，更快
+                });
+                console.log("✅ 參數設定完成");
 
                 isAIReady = true;
+                if (aiLoadTimeout) clearTimeout(aiLoadTimeout);
+                
                 document.getElementById('status-bar').innerText = "💡 AI 準備好了！";
                 document.getElementById('status-bar').style.color = "#4caf50";
+                document.getElementById('skip-ai').style.display = 'none';
                 
                 // 顯示 AI 按鈕
                 document.getElementById('btn-show').style.display = 'none';
                 document.getElementById('btn-ai').style.display = 'block';
+                
+                startLevel(); // AI 準備好了，開始遊戲
 
             } catch (err) {
-                console.warn("AI 載入失敗，維持手動模式", err);
-                document.getElementById('status-bar').innerText = "⚠️ 網路較慢，請手動對答案";
+                console.warn("❌ AI 載入失敗:", err.message);
+                console.log("切換到手動模式");
+                skipAI();
             }
         }
 
         // --- AI 辨識 ---
         async function recognizeHandwriting() {
-            if(!worker || !isAIReady) return;
+            if(!worker || !isAIReady) {
+                console.log("AI 未就緒");
+                return;
+            }
 
             const btn = document.getElementById('btn-ai');
             const txt = document.getElementById('ai-text');
@@ -181,8 +241,12 @@
 
             try {
                 const dataURL = getCanvasWithWhiteBackground();
+                console.log("🔍 開始 AI 辨識...");
+                
                 const { data: { text } } = await worker.recognize(dataURL);
-                const recognizedNum = text.trim();
+                const recognizedNum = text.trim().replace(/\D/g, ''); // 只保留數字
+                
+                console.log(`AI 辨識結果: "${recognizedNum}"`);
 
                 if (!recognizedNum) {
                     statusBar.innerText = "❓ 沒看到數字，寫大一點？";
@@ -195,13 +259,13 @@
                     setTimeout(nextQuestion, 1500);
                     return;
                 } else {
-                    statusBar.innerText = `❌ 這是 ${recognizedNum} 嗎？不對喔`;
+                    statusBar.innerText = `❌ 我看到 ${recognizedNum}，但答案不對喔`;
                     statusBar.style.color = "#c62828";
                 }
             } catch (e) {
                 console.error("AI 辨識錯誤:", e);
-                statusBar.innerText = "⚠️ AI 累了，請手動對答案";
-                showAnswerButtons();
+                statusBar.innerText = "⚠️ AI 累了，請點「看答案」手動對";
+                statusBar.style.color = "#ff9800";
             } finally {
                 btn.disabled = false;
                 btn.style.opacity = "1";
@@ -267,7 +331,7 @@
             document.getElementById('btn-clear').style.display = 'block';
             
             // 狀態列重置
-            document.getElementById('status-bar').innerText = isAIReady ? "💡 AI 準備好了" : "AI 準備中...";
+            document.getElementById('status-bar').innerText = isAIReady ? "💡 寫完後按「AI 改考卷」" : "👌 寫完後按「看答案」";
             document.getElementById('status-bar').style.color = "#999";
 
             // 如果 AI 好了就顯示 AI 按鈕，不然顯示手動
