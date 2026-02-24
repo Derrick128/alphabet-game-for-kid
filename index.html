@@ -1,81 +1,111 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Luke's Learning</title>
-    <script src="sound.js"></script>
+    <link rel="stylesheet" href="styles.css">
+    <script src="core.js"></script>
     <script src="data.js"></script>
     <style>
-        /* (樣式與之前相似，加入音樂按鈕樣式) */
-        :root {
-            --bg-color: #fdfbf7; 
-            --card-shadow: 0 10px 20px rgba(0,0,0,0.05);
-            --color-eng: #e3f2fd; --color-eng-dark: #42a5f5;
-            --color-math: #fff3e0; --color-math-dark: #ff9800;
-            --color-write: #e8f5e9; --color-write-dark: #66bb6a;
-            --color-zh: #fce4ec; --color-zh-dark: #ec407a; /* 注音主題色 */
+        header {
+            padding: 40px 20px 20px;
+            text-align: center;
         }
-
-        body {
-            font-family: 'Arial Rounded MT Bold', 'Microsoft JhengHei', sans-serif;
-            margin: 0; background-color: var(--bg-color); color: #444;
-            min-height: 100vh; display: flex; flex-direction: column; align-items: center;
-        }
-
-        header { width: 100%; padding: 40px 20px 20px; text-align: center; box-sizing: border-box; }
-        .avatar { font-size: 3.5rem; margin-bottom: 10px; display: inline-block; animation: float 3s ease-in-out infinite; }
-        h1 { margin: 0; font-size: 2.2rem; color: #5d4037; letter-spacing: 1px; }
-        p { margin: 5px 0 0; color: #8d6e63; font-size: 1rem; }
 
         main {
-            width: 90%; max-width: 600px;
-            display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); 
-            gap: 20px; padding-bottom: 80px; box-sizing: border-box;
+            width: 90%;
+            max-width: 600px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 20px;
+            padding-bottom: 80px;
         }
 
-        .card {
-            background: white; border-radius: 25px; padding: 25px 15px; text-align: center;
-            text-decoration: none; color: inherit; box-shadow: var(--card-shadow);
-            transition: all 0.2s ease; display: flex; flex-direction: column;
-            align-items: center; justify-content: center; border: 2px solid transparent; cursor: pointer;
+        .card-icon {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
         }
-        .card:active { transform: scale(0.95); }
-        .card-icon { width: 70px; height: 70px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; margin-bottom: 15px; transition: transform 0.3s; }
-        .card:hover .card-icon { transform: scale(1.1) rotate(5deg); }
-        .card-title { font-size: 1.1rem; font-weight: bold; margin-bottom: 5px; }
-        .card-desc { font-size: 0.85rem; color: #888; }
 
-        /* 個別配色 */
-        .card.eng { border-color: var(--color-eng); } .card.eng .card-icon { background-color: var(--color-eng); } .card.eng .card-title { color: var(--color-eng-dark); }
-        .card.math { border-color: var(--color-math); } .card.math .card-icon { background-color: var(--color-math); } .card.math .card-title { color: var(--color-math-dark); }
-        .card.write-en { border-color: var(--color-write); } .card.write-en .card-icon { background-color: var(--color-write); } .card.write-en .card-title { color: var(--color-write-dark); }
-        .card.write-zh { border-color: var(--color-zh); } .card.write-zh .card-icon { background-color: var(--color-zh); } .card.write-zh .card-title { color: var(--color-zh-dark); }
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
 
-        /* 音樂按鈕 */
-        #music-toggle {
-            position: fixed; bottom: 20px; right: 20px;
-            width: 50px; height: 50px; border-radius: 50%;
-            background: #fff; border: 3px solid #ffcc80;
-            font-size: 1.5rem; cursor: pointer;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-            display: flex; align-items: center; justify-content: center;
+        .card-desc {
+            font-size: 0.85rem;
+            color: var(--text-light);
+        }
+
+        .eng {
+            border-color: var(--bg-blue);
+            color: #0277bd;
+        }
+
+        .math {
+            border-color: var(--bg-orange);
+            color: #e65100;
+        }
+
+        .write-en {
+            border-color: var(--bg-green);
+            color: #2e7d32;
+        }
+
+        .write-zh {
+            border-color: #fce4ec;
+            color: #c2185b;
+        }
+
+        .btn-round {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            position: fixed;
             z-index: 100;
+            font-size: 1.5rem;
         }
 
-        @keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-10px); } 100% { transform: translateY(0px); } }
-        .bg-deco { position: fixed; border-radius: 50%; z-index: -1; opacity: 0.5; }
-        .deco-1 { width: 200px; height: 200px; background: #e0f2f1; top: -50px; left: -50px; }
-        .deco-2 { width: 150px; height: 150px; background: #fff3e0; bottom: 20px; right: -30px; }
+        #music-toggle {
+            bottom: 20px;
+            right: 20px;
+        }
+
+        #shop-btn {
+            bottom: 20px;
+            left: 20px;
+        }
+
+        @keyframes float {
+            0% {
+                transform: translateY(0px) rotate(0deg);
+            }
+
+            50% {
+                transform: translateY(-10px) rotate(5deg);
+            }
+
+            100% {
+                transform: translateY(0px) rotate(0deg);
+            }
+        }
     </style>
 </head>
+
 <body>
 
-    <div class="bg-deco deco-1"></div>
-    <div class="bg-deco deco-2"></div>
-
     <header>
-        <div class="avatar">🦁</div>
+        <div class="status-header">
+            <div class="pet-container" id="pet-avatar-container">
+                <span id="base-pet">🦖</span>
+                <div id="acc-layer"></div>
+            </div>
+            <div class="star-badge">
+                ⭐ <span id="star-count">0</span>
+            </div>
+        </div>
         <h1>Luke's Learning</h1>
         <p>今天想玩什麼呢？</p>
     </header>
@@ -106,15 +136,96 @@
         </a>
     </main>
 
-    <button id="music-toggle" onclick="toggleMusic()">🎵</button>
+    <button id="shop-btn" class="btn btn-accent btn-round" onclick="toggleShop(true)">🛍️</button>
+    <button id="music-toggle" class="btn btn-secondary btn-round" onclick="toggleMusic()">🎵</button>
+
+    <!-- Shop UI -->
+    <div id="shop-overlay" class="shop-overlay" onclick="toggleShop(false)"></div>
+    <div id="shop-modal" class="shop-modal">
+        <h2 style="margin-top:0">星星商店 ⭐</h2>
+        <p>收集星星買配件，把小恐龍變帥！</p>
+        <div id="shop-grid" class="shop-grid"></div>
+        <button class="btn btn-gray" style="width:100%; margin-top:20px;" onclick="toggleShop(false)">關閉</button>
+    </div>
+
+    <div id="feedback-msg"></div>
 
     <script>
+        function updateUI() {
+            document.getElementById('star-count').innerText = LukeCore.Stats.getStars();
+            renderPet();
+        }
+
+        function renderPet() {
+            const accLayer = document.getElementById('acc-layer');
+            accLayer.innerHTML = '';
+            const outfit = LukeCore.Stats.getOutfit();
+
+            outfit.forEach(itemId => {
+                const item = SHOP_DATA.find(i => i.id === itemId);
+                if (item) {
+                    const el = document.createElement('div');
+                    el.className = `pet-accessory acc-${item.id}`;
+                    el.innerText = item.icon;
+                    accLayer.appendChild(el);
+                }
+            });
+        }
+
+        function toggleShop(show) {
+            document.getElementById('shop-modal').style.display = show ? 'block' : 'none';
+            document.getElementById('shop-overlay').style.display = show ? 'block' : 'none';
+            if (show) renderShop();
+            playClick();
+        }
+
+        function renderShop() {
+            const grid = document.getElementById('shop-grid');
+            grid.innerHTML = '';
+            const inventory = LukeCore.Stats.getInventory();
+            const outfit = LukeCore.Stats.getOutfit();
+
+            SHOP_DATA.forEach(item => {
+                const isOwned = inventory.includes(item.id);
+                const isEquipped = outfit.includes(item.id);
+
+                const card = document.createElement('div');
+                card.className = `item-card ${isOwned ? 'owned' : ''} ${isEquipped ? 'equipped' : ''}`;
+                card.innerHTML = `
+                    <div class="item-icon">${item.icon}</div>
+                    <div class="item-name">${item.name}</div>
+                    <div class="item-price">${isOwned ? '已擁有' : '⭐ ' + item.price}</div>
+                `;
+
+                card.onclick = () => {
+                    if (isOwned) {
+                        LukeCore.Stats.toggleEquip(item.id);
+                        showFeedback(isEquipped ? "收起來了" : "穿上去了！");
+                    } else {
+                        const res = LukeCore.Stats.buyItem(item.id, item.price);
+                        if (res.success) {
+                            showFeedback("購買成功！");
+                            LukeCore.Audio.playSuccess();
+                        } else {
+                            showFeedback(res.reason);
+                        }
+                    }
+                    updateUI();
+                    renderShop();
+                };
+                grid.appendChild(card);
+            });
+        }
+
         function toggleMusic() {
-            const isPlaying = toggleBGM();
+            const isPlaying = LukeCore.Audio.toggleBGM();
             document.getElementById('music-toggle').innerText = isPlaying ? "⏸️" : "🎵";
             playClick();
         }
-    </script>
 
+        // Initialize
+        updateUI();
+    </script>
 </body>
+
 </html>
