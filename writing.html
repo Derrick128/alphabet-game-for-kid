@@ -325,6 +325,33 @@
             };
         }
 
+        // --- Lenient AI Logic ---
+        function checkLenient(input, target) {
+            const lowInput = input.trim().toLowerCase();
+            const lowTarget = target.trim().toLowerCase();
+
+            // 1. Direct match
+            if (lowInput.includes(lowTarget)) return true;
+
+            // 2. Similarity Mapping
+            const SIM_MAP = {
+                'b': ['b', '8', '6'],
+                'f': ['f', '7', 't'],
+                'm': ['m', 'n', 'w'],
+                'n': ['n', 'm', 'r'],
+                'o': ['o', '0', 'q', 'c'],
+                's': ['s', '5', '8'],
+                'z': ['z', '2'],
+                'i': ['i', '1', 'l', '|']
+            };
+
+            if (SIM_MAP[lowTarget]) {
+                return SIM_MAP[lowTarget].some(sim => lowInput.includes(sim));
+            }
+
+            return false;
+        }
+
         // --- Canvas Logic ---
         function getCanvasWithWhiteBackground() {
             const w = canvas.width, h = canvas.height;
