@@ -252,8 +252,8 @@
             const duration = LukeCore.Timer.stop();
             LukeCore.Daily.markComplete('math', duration);
 
-            alert(`測驗結束！\n答對題數：${correctCount} / 50\n用時：${Math.floor(duration / 60)}分${duration % 60}秒\n獲得星星：${correctCount * 2}`);
-            LukeCore.Stats.addStars(correctCount * 2);
+            alert(`測驗結束！\n答對題數：${correctCount} / 50\n用時：${Math.floor(duration / 60)}分${duration % 60}秒`);
+            // LukeCore.Stats.addStars(correctCount * 2); // REPLACED BY DAILY CHEST
             renderPage(currentPage);
 
             // Allow correction
