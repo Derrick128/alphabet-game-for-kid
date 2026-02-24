@@ -66,6 +66,9 @@
             position: fixed;
             z-index: 100;
             font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         #music-toggle {
@@ -76,6 +79,41 @@
         #shop-btn {
             bottom: 20px;
             left: 20px;
+        }
+
+        /* Profile Switcher */
+        .profile-switcher {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            box-shadow: 0 4px 10px var(--shadow);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            z-index: 1000;
+            border: 2px solid transparent;
+        }
+
+        .profile-switcher:hover {
+            border-color: var(--primary);
+        }
+
+        .profile-switcher.test {
+            background: #eee;
+            border-color: #999;
+        }
+
+        .profile-icon {
+            font-size: 1.2rem;
+        }
+
+        .profile-name {
+            font-weight: bold;
+            font-size: 0.9rem;
         }
 
         @keyframes float {
@@ -97,6 +135,11 @@
 <body>
 
     <header>
+        <div class="profile-switcher" id="profile-btn" onclick="toggleProfile()">
+            <span class="profile-icon" id="profile-icon">🧒</span>
+            <span class="profile-name" id="profile-name">Luke 模式</span>
+        </div>
+
         <div class="status-header">
             <div class="pet-container" id="pet-avatar-container">
                 <span id="base-pet">🦖</span>
@@ -143,7 +186,7 @@
     <div id="shop-overlay" class="shop-overlay" onclick="toggleShop(false)"></div>
     <div id="shop-modal" class="shop-modal">
         <h2 style="margin-top:0">星星商店 ⭐</h2>
-        <p>收集星星買配件，把小恐龍變帥！</p>
+        <p id="shop-welcome">收集星星買配件，把小恐龍變帥！</p>
         <div id="shop-grid" class="shop-grid"></div>
         <button class="btn btn-gray" style="width:100%; margin-top:20px;" onclick="toggleShop(false)">關閉</button>
     </div>
@@ -151,9 +194,27 @@
     <div id="feedback-msg"></div>
 
     <script>
+        const profileDisplay = {
+            luke: { name: 'Luke 模式', icon: '🧒', welcome: '收集星星買配件，把小恐龍變帥！' },
+            test: { name: '測試模式', icon: '👨‍💻', welcome: '正在測試中... 別擔心，這不會影響 Luke 的星星！' }
+        };
+
         function updateUI() {
+            const currentProfile = LukeCore.Profile.current;
+            const config = profileDisplay[currentProfile];
+
+            document.getElementById('profile-name').innerText = config.name;
+            document.getElementById('profile-icon').innerText = config.icon;
+            document.getElementById('profile-btn').className = `profile-switcher ${currentProfile}`;
+            document.getElementById('shop-welcome').innerText = config.welcome;
+
             document.getElementById('star-count').innerText = LukeCore.Stats.getStars();
             renderPet();
+        }
+
+        function toggleProfile() {
+            const next = LukeCore.Profile.current === 'luke' ? 'test' : 'luke';
+            LukeCore.Profile.set(next);
         }
 
         function renderPet() {
@@ -200,11 +261,9 @@
                 card.onclick = () => {
                     if (isOwned) {
                         LukeCore.Stats.toggleEquip(item.id);
-                        showFeedback(isEquipped ? "收起來了" : "穿上去了！");
                     } else {
                         const res = LukeCore.Stats.buyItem(item.id, item.price);
                         if (res.success) {
-                            showFeedback("購買成功！");
                             LukeCore.Audio.playSuccess();
                         } else {
                             showFeedback(res.reason);
