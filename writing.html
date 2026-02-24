@@ -290,8 +290,8 @@
                 try {
                     const { data: { text } } = await worker.recognize(q.imgData);
                     const recognized = text.trim();
-                    // Basic check: includes the target character?
-                    if (recognized.toLowerCase().includes(q.target.toLowerCase())) {
+
+                    if (checkLenient(recognized, q.target)) {
                         q.result = 'correct';
                         correctCount++;
                     } else {
@@ -306,8 +306,8 @@
             const duration = LukeCore.Timer.stop();
             LukeCore.Daily.markComplete(taskId, duration);
 
-            alert(`練字結束！\n答對題數：${correctCount} / ${TOTAL}\n用時：${Math.floor(duration / 60)}分${duration % 60}秒\n獲得星星：${correctCount * 1}`);
-            LukeCore.Stats.addStars(correctCount * 1);
+            alert(`練字結束！\n答對題數：${correctCount} / ${TOTAL}\n用時：${Math.floor(duration / 60)}分${duration % 60}秒`);
+            // LukeCore.Stats.addStars(correctCount * 1); // REPLACED BY DAILY CHEST
 
             renderList();
 
