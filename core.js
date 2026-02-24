@@ -1,9 +1,29 @@
 /* 
  * Luke's Learning - Core Logic (core.js)
  * Central management for Sound, Stars, and Data
+ * Added: Multi-Profile Support
  */
 
 const LukeCore = {
+    // --- 👥 Profile Management ---
+    Profile: {
+        current: 'luke', // Default
+
+        init() {
+            this.current = localStorage.getItem('luke_active_profile') || 'luke';
+        },
+
+        set(profileId) {
+            this.current = profileId;
+            localStorage.setItem('luke_active_profile', profileId);
+            location.reload(); // Reload to refresh all system states
+        },
+
+        getPrefix() {
+            return this.current + '_';
+        }
+    },
+
     // --- 🔊 Sound Management ---
     Audio: {
         ctx: null,
@@ -87,42 +107,44 @@ const LukeCore = {
 
     // --- ⭐ Star & Progress Management ---
     Stats: {
+        _key(label) {
+            return LukeCore.Profile.getPrefix() + label;
+        },
         getStars() {
-            return parseInt(localStorage.getItem('luke_stars') || '0');
+            return parseInt(localStorage.getItem(this._key('stars')) || '0');
         },
         addStars(count) {
             const current = this.getStars();
-            localStorage.setItem('luke_stars', current + count);
+            localStorage.setItem(this._key('stars'), current + count);
             console.log(`⭐ Stars Added: ${count}. Total: ${current + count}`);
             return current + count;
         },
         // --- 🛍️ Shop & Inventory ---
         getInventory() {
-            return JSON.parse(localStorage.getItem('luke_inventory') || '[]');
+            return JSON.parse(localStorage.getItem(this._key('inventory')) || '[]');
         },
         buyItem(itemId, price) {
             const stars = this.getStars();
             const inventory = this.getInventory();
             if (stars >= price && !inventory.includes(itemId)) {
-                localStorage.setItem('luke_stars', stars - price);
+                localStorage.setItem(this._key('stars'), stars - price);
                 inventory.push(itemId);
-                localStorage.setItem('luke_inventory', JSON.stringify(inventory));
+                localStorage.setItem(this._key('inventory'), JSON.stringify(inventory));
                 return { success: true, stars: stars - price };
             }
             return { success: false, reason: stars < price ? '星星不夠喔！' : '已經擁有了' };
         },
         saveOutfit(outfit) {
-            localStorage.setItem('luke_outfit', JSON.stringify(outfit));
+            localStorage.setItem(this._key('outfit'), JSON.stringify(outfit));
         },
         getOutfit() {
-            return JSON.parse(localStorage.getItem('luke_outfit') || '[]');
+            return JSON.parse(localStorage.getItem(this._key('outfit')) || '[]');
         },
         toggleEquip(itemId) {
             let outfit = this.getOutfit();
             if (outfit.includes(itemId)) {
                 outfit = outfit.filter(id => id !== itemId);
             } else {
-                // If we want categories (only one hat, etc.), we'd implement that here
                 outfit.push(itemId);
             }
             this.saveOutfit(outfit);
@@ -140,8 +162,15 @@ const LukeCore = {
                 setTimeout(() => el.style.display = 'none', duration);
             }
         }
+    },
+
+    init() {
+        this.Profile.init();
     }
 };
+
+// Auto-init
+LukeCore.init();
 
 // Global shorthand for games to use
 const playClick = () => LukeCore.Audio.playClick();
