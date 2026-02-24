@@ -108,6 +108,7 @@
 
         // Init 50 questions
         function setupExam() {
+            LukeCore.Timer.start(); // Start Timer
             allQuestions = [];
             for (let i = 0; i < TOTAL_QUESTIONS; i++) {
                 // Mix difficulty
@@ -248,13 +249,28 @@
 
             // Finish
             document.getElementById('grading-modal').style.display = 'none';
-            alert(`測驗結束！\n答對題數：${correctCount} / 50\n獲得星星：${correctCount * 2}`);
+            const duration = LukeCore.Timer.stop();
+            LukeCore.Daily.markComplete('math', duration);
+
+            alert(`測驗結束！\n答對題數：${correctCount} / 50\n用時：${Math.floor(duration / 60)}分${duration % 60}秒\n獲得星星：${correctCount * 2}`);
             LukeCore.Stats.addStars(correctCount * 2);
             renderPage(currentPage);
 
-            // Show reset button?
-            document.getElementById('btn-submit-exam').innerText = "再挑戰一次";
-            document.getElementById('btn-submit-exam').onclick = () => location.reload();
+            // Allow correction
+            document.getElementById('btn-submit-exam').innerText = "修正錯誤題目";
+            document.getElementById('btn-submit-exam').className = "btn btn-secondary";
+            document.getElementById('btn-submit-exam').onclick = () => {
+                // Find first wrong item and focus it
+                const firstWrong = allQuestions.findIndex(q => q.result === 'wrong');
+                if (firstWrong !== -1) {
+                    currentPage = Math.floor(firstWrong / PAGE_SIZE);
+                    renderPagination();
+                    selectQuestion(firstWrong);
+                } else {
+                    alert("全部都對囉！太棒了！");
+                    location.href = 'index.html';
+                }
+            };
         }
 
         // --- Question Generation (Simplified from original) ---
