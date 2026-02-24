@@ -63,6 +63,12 @@
             color: var(--accent);
             font-weight: bold;
         }
+
+        .question-list {
+            flex: 0 0 55% !important;
+        }
+
+        /* Wider for the grid */
     </style>
 </head>
 
@@ -135,44 +141,83 @@
         }
 
         function setupSession() {
-            const list = GAME_DATA.WRITING[writingType];
-            const shuffled = [...list].sort(() => Math.random() - 0.5);
-            sessionData = shuffled.slice(0, TOTAL).map(char => ({
-                target: char,
-                imgData: null,
-                result: null
-            }));
+            const fullList = GAME_DATA.WRITING[writingType];
+
+            // Randomly pick 15 indices to be blanks
+            const blankIndices = [];
+            while (blankIndices.length < TOTAL) {
+                const r = Math.floor(Math.random() * fullList.length);
+                if (!blankIndices.includes(r)) blankIndices.push(r);
+            }
+            blankIndices.sort((a, b) => a - b);
+
+            sessionData = fullList.map((char, i) => {
+                const isBlank = blankIndices.includes(i);
+                return {
+                    target: char,
+                    isBlank: isBlank,
+                    imgData: null,
+                    result: null,
+                    displayIndex: i + 1
+                };
+            });
         }
 
         function renderList() {
             const grid = document.getElementById('questions-grid');
             grid.innerHTML = '';
-            let filled = 0;
+            let filledCount = 0;
+            const blanks = sessionData.filter(s => s.isBlank);
+
+            // Create a more "flowy" display
+            const container = document.createElement('div');
+            container.style.display = 'flex';
+            container.style.flexWrap = 'wrap';
+            container.style.gap = '10px';
+            container.style.justifyContent = 'center';
+            container.style.padding = '10px';
 
             sessionData.forEach((item, i) => {
-                if (item.imgData) filled++;
+                if (item.isBlank && item.imgData) filledCount++;
+
                 const el = document.createElement('div');
-                el.className = `math-item ${currentIndex === i ? 'active' : ''}`;
-                if (item.result) el.classList.add('graded', item.result);
+                if (item.isBlank) {
+                    el.className = `math-item ${currentIndex === i ? 'active' : ''}`;
+                    if (item.result) el.classList.add('graded', item.result);
+                    el.style.width = '80px';
+                    el.style.flexDirection = 'column';
+                    el.style.padding = '5px';
 
-                el.innerHTML = `
-                    <span>${i + 1}. ${item.target}</span>
-                    <div class="slot-box">
-                        ${item.imgData ? `<img src="${item.imgData}" class="slot-thumbnail">` : ''}
-                    </div>
-                `;
-                el.onclick = () => selectItem(i);
-                grid.appendChild(el);
+                    el.innerHTML = `
+                        <span style="font-size:0.8rem; color:#999">${item.displayIndex}</span>
+                        <div class="slot-box" style="width:50px; height:50px; margin:0 auto">
+                            ${item.imgData ? `<img src="${item.imgData}" class="slot-thumbnail">` : '?'}
+                        </div>
+                    `;
+                    el.onclick = () => selectItem(i);
+                } else {
+                    el.style.width = '40px';
+                    el.style.height = '60px';
+                    el.style.display = 'flex';
+                    el.style.alignItems = 'center';
+                    el.style.justifyContent = 'center';
+                    el.style.fontSize = '1.8rem';
+                    el.style.color = '#ccc';
+                    el.style.border = '2px solid transparent';
+                    el.innerText = item.target;
+                }
+                container.appendChild(el);
             });
+            grid.appendChild(container);
 
-            document.getElementById('exam-progress').innerText = `進度: ${filled}/${TOTAL}`;
-            document.getElementById('btn-submit-exam').style.display = (filled === TOTAL) ? 'block' : 'none';
+            document.getElementById('exam-progress').innerText = `進度: ${filledCount}/${TOTAL}`;
+            document.getElementById('btn-submit-exam').style.display = (filledCount === TOTAL) ? 'block' : 'none';
         }
 
         function selectItem(idx) {
             currentIndex = idx;
             document.getElementById('cloze-char').innerText = sessionData[idx].target;
-            document.getElementById('current-focus-text').innerText = `正在寫第 ${idx + 1} 題`;
+            document.getElementById('current-focus-text').innerText = `正在寫第 ${sessionData[idx].displayIndex} 題`;
             document.getElementById('btn-confirm').disabled = false;
 
             clearCanvas();
@@ -185,8 +230,20 @@
             sessionData[currentIndex].imgData = getCanvasWithWhiteBackground();
             playClick();
 
-            if (currentIndex < TOTAL - 1) {
-                selectItem(currentIndex + 1);
+            if (currentIndex < sessionData.length - 1) {
+                // Find the next blank item
+                let nextBlankIndex = -1;
+                for (let i = currentIndex + 1; i < sessionData.length; i++) {
+                    if (sessionData[i].isBlank) {
+                        nextBlankIndex = i;
+                        break;
+                    }
+                }
+                if (nextBlankIndex !== -1) {
+                    selectItem(nextBlankIndex);
+                } else {
+                    renderList(); // All blanks filled, just re-render to update progress
+                }
             } else {
                 renderList();
             }
@@ -208,8 +265,9 @@
             }
 
             let correctCount = 0;
-            for (let i = 0; i < sessionData.length; i++) {
-                const q = sessionData[i];
+            const blanks = sessionData.filter(s => s.isBlank);
+            for (let i = 0; i < blanks.length; i++) {
+                const q = blanks[i];
                 document.getElementById('grad-progress').innerText = `${Math.round((i / TOTAL) * 100)}%`;
 
                 try {
@@ -240,9 +298,9 @@
             btn.innerText = "修正錯誤內容";
             btn.className = "btn btn-secondary";
             btn.onclick = () => {
-                const firstWrong = sessionData.findIndex(s => s.result === 'wrong');
-                if (firstWrong !== -1) {
-                    selectItem(firstWrong);
+                const firstWrongIndex = sessionData.findIndex(s => s.isBlank && s.result === 'wrong');
+                if (firstWrongIndex !== -1) {
+                    selectItem(firstWrongIndex);
                 } else {
                     alert("漂亮！全部都寫對囉！");
                     location.href = 'index.html';
