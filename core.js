@@ -21,6 +21,20 @@ const LukeCore = {
 
         getPrefix() {
             return this.current + '_';
+        },
+
+        reset(id) {
+            const keysToRemove = [];
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                // Match prefix_stars, daily_YYYY-MM-DD_prefix_task, chest_YYYY-MM-DD_prefix
+                if (key.startsWith(id + '_') || key.includes('_' + id + '_') || key.endsWith('_' + id)) {
+                    keysToRemove.push(key);
+                }
+            }
+            keysToRemove.forEach(k => localStorage.removeItem(k));
+            console.log(`🧹 Profile Reset: ${id}`);
+            location.reload();
         }
     },
 
