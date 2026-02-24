@@ -4,38 +4,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>數學挑戰 - 智能手寫版</title>
-
+    <title>數學大挑戰 - 50題大關卡</title>
     <link rel="stylesheet" href="styles.css">
     <script src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'></script>
     <script src="core.js"></script>
     <script src="data.js"></script>
-
     <style>
         body {
             background-color: var(--bg-orange);
+            padding-top: 10px;
         }
 
         .container {
-            border: 5px solid #d84315;
-        }
-
-        #question-box {
-            font-size: 2.5em;
-            margin: 10px 0;
-            color: #e65100;
-            font-weight: bold;
-            min-height: 60px;
+            max-width: 950px;
+            height: 95vh;
+            display: flex;
+            flex-direction: column;
         }
 
         #canvas-wrapper {
-            position: relative;
-            width: 100%;
-            height: 250px;
-            border: 4px dashed #ffab91;
-            border-radius: 15px;
-            margin-bottom: 15px;
+            flex: 1;
             background: #fff;
+            border: 5px solid #ffab91;
+            border-radius: 20px;
+            position: relative;
             cursor: crosshair;
         }
 
@@ -43,274 +35,285 @@
             width: 100%;
             height: 100%;
             touch-action: none;
-            border-radius: 10px;
+            border-radius: 15px;
         }
 
-        #status-bar {
-            height: 35px;
-            font-size: 0.9rem;
-            color: var(--text-light);
-            margin-bottom: 10px;
-            font-weight: bold;
-        }
-
-        #answer-reveal {
+        .grading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
             display: none;
-            margin: 10px 0;
-            padding: 15px;
-            background: #fff8e1;
-            border-radius: 10px;
-            border: 2px solid #ffecb3;
-        }
-
-        .correct-ans {
-            font-size: 2.2em;
-            color: var(--accent);
-            font-weight: bold;
-        }
-
-        .btn-group {
-            display: flex;
-            gap: 10px;
+            flex-direction: column;
+            align-items: center;
             justify-content: center;
-            margin-top: 10px;
-            flex-wrap: wrap;
-        }
-
-        .btn {
-            flex: 1;
-        }
-
-        .btn-clear {
-            flex: 0.6;
-        }
-
-        .btn-ai {
-            display: none;
-        }
-
-        .btn-yes,
-        .btn-no {
-            display: none;
-        }
-
-        .spinner {
-            border: 3px solid #ffffff40;
-            border-top: 3px solid #fff;
-            border-radius: 50%;
-            width: 16px;
-            height: 16px;
-            animation: spin 1s linear infinite;
-            display: inline-block;
-            vertical-align: middle;
-            margin-right: 5px;
-        }
-
-        @keyframes spin {
-            0% {
-                transform: rotate(0deg);
-            }
-
-            100% {
-                transform: rotate(360deg);
-            }
-        }
-
-        .skip-ai {
-            font-size: 0.75em;
-            color: var(--text-light);
-            text-decoration: underline;
-            cursor: pointer;
-            margin-top: 5px;
+            z-index: 3000;
         }
     </style>
 </head>
 
 <body>
+
     <div class="container">
         <div class="top-bar">
-            <a href="index.html" class="nav-link" onclick="playClick()">🏠</a>
-            <div id="score-board" style="color:var(--text-light); font-weight: bold;">0/5</div>
+            <a href="index.html" class="nav-link" onclick="playClick()">🏠 主選單</a>
+            <div id="exam-progress" style="font-weight: bold;">已完成: 0/50</div>
+            <div style="color: var(--primary); font-weight: bold;">數學大挑戰</div>
         </div>
 
-        <div id="level-title" style="color:#bf360c; font-weight:bold; margin-bottom:5px;">Level 1</div>
-        <div id="question-box">...</div>
+        <div class="math-layout">
+            <!-- Left: Question List -->
+            <div class="question-list" id="question-list">
+                <div class="math-pagination" id="pagination"></div>
+                <div id="questions-grid" style="display:flex; flex-direction:column; gap:8px;"></div>
+                <button id="btn-submit-exam" class="btn btn-accent" style="display:none;" onclick="submitExam()">📤
+                    全部寫完囉！交卷</button>
+            </div>
 
-        <div id="canvas-wrapper">
-            <canvas id="writeCanvas"></canvas>
-            <div
-                style="position: absolute; bottom: 5px; right: 5px; color: #eee; font-size: 0.8em; pointer-events: none;">
-                在此書寫</div>
-        </div>
-
-        <div id="status-bar">
-            正在載入 AI 小幫手...
-            <div class="skip-ai" id="skip-ai" style="display:none;" onclick="skipAI()">⏭️ 跳過 AI，直接開始</div>
-        </div>
-
-        <div id="answer-reveal">
-            正確答案：<span class="correct-ans" id="correct-text"></span>
-        </div>
-
-        <div class="btn-group">
-            <button class="btn btn-gray btn-clear" id="btn-clear" onclick="clearCanvas()">重寫</button>
-
-            <button id="btn-ai" class="btn btn-secondary btn-ai" onclick="recognizeHandwriting()">
-                <span id="ai-loading" class="spinner" style="display:none"></span>
-                <span id="ai-text">AI 改考卷</span>
-            </button>
-
-            <button id="btn-show" class="btn btn-primary btn-show" onclick="showAnswer()">看答案</button>
-
-            <button id="btn-yes" class="btn btn-accent btn-yes" onclick="judge(true)">⭕ 答對</button>
-            <button id="btn-no" class="btn btn-danger btn-no" onclick="judge(false)">❌ 答錯</button>
+            <!-- Right: Canvas -->
+            <div class="canvas-section">
+                <div class="canvas-info" id="current-focus-text">請點擊左側題目開始</div>
+                <div id="canvas-wrapper">
+                    <canvas id="mathCanvas"></canvas>
+                </div>
+                <div class="btn-group" style="display: flex; gap: 10px;">
+                    <button class="btn btn-gray" onclick="clearCanvas()">重寫</button>
+                    <button class="btn btn-primary" id="btn-confirm" onclick="confirmAnswer()" disabled>確認填入 ✅</button>
+                </div>
+            </div>
         </div>
     </div>
 
+    <!-- AI Grading Modal -->
+    <div id="grading-modal" class="grading-overlay">
+        <h2>AI 正在努力改考卷中...</h2>
+        <div id="grad-progress">0%</div>
+        <div class="spinner" style="width:40px; height:40px; border-width:5px;"></div>
+    </div>
+
     <script>
-        let LEVELS_CONFIG = {};
-        let currentLevel = 1, score = 0, round = 0, currentAnswer = 0;
-        const canvas = document.getElementById('writeCanvas');
+        const TOTAL_QUESTIONS = 50;
+        const PAGE_SIZE = 10;
+        let allQuestions = [];
+        let currentPage = 0;
+        let currentIndex = -1;
+
+        const canvas = document.getElementById('mathCanvas');
         const ctx = canvas.getContext('2d');
-        let isDrawing = false, worker = null, isAIReady = false, aiLoadTimeout = null;
+        let isDrawing = false;
+        let worker = null;
 
-        function init() {
-            LEVELS_CONFIG = {
-                1: { title: "L1: 基礎運算", type: "ADD_CARRY", min: 1, max: 10 },
-                2: { title: "L2: 進階運算", type: "SUB_BORROW", min: 10, max: 20 },
-                3: { title: "L3: 混合挑戰", type: "MIXED_3", min: 10, max: 20 }
-            };
-            if (typeof GAME_DATA !== 'undefined' && GAME_DATA.MATH && GAME_DATA.MATH.LEVELS) LEVELS_CONFIG = GAME_DATA.MATH.LEVELS;
-            resizeCanvas(); window.addEventListener('resize', resizeCanvas); setupCanvas();
-            document.getElementById('question-box').innerText = "載入中..."; initAI();
-            aiLoadTimeout = setTimeout(() => { if (!isAIReady) skipAI(); }, 15000);
-            setTimeout(() => { if (!isAIReady) document.getElementById('skip-ai').style.display = 'block'; }, 5000);
+        // Init 50 questions
+        function setupExam() {
+            allQuestions = [];
+            for (let i = 0; i < TOTAL_QUESTIONS; i++) {
+                // Mix difficulty
+                let level = 1;
+                if (i > 15) level = 2;
+                if (i > 35) level = 3;
+
+                const qData = generateQuestion(level);
+                allQuestions.push({
+                    q: qData.q,
+                    a: qData.a,
+                    imgData: null,
+                    result: null // 'correct', 'wrong', null
+                });
+            }
+            renderPagination();
+            renderPage(0);
         }
 
-        function skipAI() {
-            if (aiLoadTimeout) clearTimeout(aiLoadTimeout);
-            isAIReady = false;
-            document.getElementById('status-bar').innerText = "👌 使用手動對答模式";
-            document.getElementById('btn-show').style.display = 'block';
-            document.getElementById('btn-ai').style.display = 'none';
-            startLevel();
+        function renderPagination() {
+            const nav = document.getElementById('pagination');
+            nav.innerHTML = '';
+            for (let i = 0; i < 5; i++) {
+                const btn = document.createElement('div');
+                btn.className = `page-btn ${i === currentPage ? 'active' : ''}`;
+                btn.innerText = `P${i + 1}`;
+                btn.onclick = () => {
+                    currentPage = i;
+                    renderPagination();
+                    renderPage(i);
+                    playClick();
+                };
+                nav.appendChild(btn);
+            }
         }
 
-        async function initAI() {
-            try {
+        function renderPage(pageIdx) {
+            const grid = document.getElementById('questions-grid');
+            grid.innerHTML = '';
+            const start = pageIdx * PAGE_SIZE;
+            const end = start + PAGE_SIZE;
+
+            for (let i = start; i < end; i++) {
+                const item = allQuestions[i];
+                const el = document.createElement('div');
+                el.className = `math-item ${currentIndex === i ? 'active' : ''}`;
+                if (item.result) el.classList.add('graded', item.result);
+
+                el.innerHTML = `
+                    <span>${i + 1}. ${item.q.replace('?', '')}</span>
+                    <div class="slot-box" id="slot-${i}">
+                        ${item.imgData ? `<img src="${item.imgData}" class="slot-thumbnail">` : ''}
+                    </div>
+                `;
+                el.onclick = () => selectQuestion(i);
+                grid.appendChild(el);
+            }
+
+            // Show submit button only if many are filled
+            const filledCount = allQuestions.filter(q => q.imgData).length;
+            document.getElementById('btn-submit-exam').style.display = filledCount >= 10 ? 'block' : 'none';
+            document.getElementById('exam-progress').innerText = `已完成: ${filledCount}/50`;
+        }
+
+        function selectQuestion(idx) {
+            currentIndex = idx;
+            document.getElementById('current-focus-text').innerText = `正在寫第 ${idx + 1} 題：${allQuestions[idx].q}`;
+            document.getElementById('btn-confirm').disabled = false;
+
+            // Clear or Load existing drawing? 
+            // User requested "保有修改空間", so we should ideally reload...
+            // But canvas is usually temporary. To modify, they draw fresh.
+            clearCanvas();
+
+            renderPage(currentPage); // update active class
+            playClick();
+        }
+
+        function confirmAnswer() {
+            if (currentIndex === -1) return;
+
+            // Capture canvas
+            const dataURL = getCanvasWithWhiteBackground();
+            allQuestions[currentIndex].imgData = dataURL;
+
+            // Feedback
+            playClick();
+            LukeCore.UI.showFeedback("已填入答案！");
+
+            // Auto advance?
+            if (currentIndex < TOTAL_QUESTIONS - 1) {
+                // If next is in same page
+                if (Math.floor((currentIndex + 1) / PAGE_SIZE) === currentPage) {
+                    selectQuestion(currentIndex + 1);
+                } else {
+                    renderPage(currentPage);
+                }
+            } else {
+                renderPage(currentPage);
+            }
+        }
+
+        async function submitExam() {
+            if (!confirm("確定要交卷評分嗎？")) return;
+
+            document.getElementById('grading-modal').style.display = 'flex';
+
+            if (!worker) {
                 worker = await Tesseract.createWorker('eng', 1, {
                     langPath: 'https://tessdata.projectnaptha.com/4.0.0'
                 });
                 await worker.setParameters({ tessedit_char_whitelist: '0123456789', tessedit_pageseg_mode: '8' });
-                isAIReady = true; if (aiLoadTimeout) clearTimeout(aiLoadTimeout);
-                document.getElementById('status-bar').innerText = "💡 AI 準備好了！";
-                document.getElementById('status-bar').style.color = "var(--accent)";
-                document.getElementById('btn-show').style.display = 'none';
-                document.getElementById('btn-ai').style.display = 'block';
-                startLevel();
-            } catch (err) { skipAI(); }
-        }
-
-        async function recognizeHandwriting() {
-            if (!worker || !isAIReady) return;
-            const btn = document.getElementById('btn-ai');
-            const txt = document.getElementById('ai-text');
-            const spin = document.getElementById('ai-loading');
-            const statusBar = document.getElementById('status-bar');
-            btn.disabled = true; txt.innerText = "辨識中..."; spin.style.display = "inline-block"; playClick();
-            try {
-                const dataURL = getCanvasWithWhiteBackground();
-                const { data: { text } } = await worker.recognize(dataURL);
-                const recognizedNum = text.trim().replace(/\D/g, '');
-                if (!recognizedNum) { statusBar.innerText = "❓ 沒看到數字"; statusBar.style.color = "var(--danger)"; }
-                else if (parseInt(recognizedNum) === currentAnswer) {
-                    statusBar.innerText = `✅ 答對了！是 ${recognizedNum}`; statusBar.style.color = "var(--accent)";
-                    playSuccess(); LukeCore.Stats.addStars(5); score++; setTimeout(nextQuestion, 1500); return;
-                } else { statusBar.innerText = `❌ 我看到 ${recognizedNum}`; statusBar.style.color = "var(--danger)"; }
-            } catch (e) { statusBar.innerText = "⚠️ AI 累了"; } finally { btn.disabled = false; txt.innerText = "AI 改考卷"; spin.style.display = "none"; }
-        }
-
-        function showAnswer() {
-            document.getElementById('correct-text').innerText = currentAnswer;
-            document.getElementById('answer-reveal').style.display = 'block';
-            document.getElementById('btn-show').style.display = 'none';
-            document.getElementById('btn-ai').style.display = 'none';
-            document.getElementById('btn-clear').style.display = 'none';
-            document.getElementById('btn-yes').style.display = 'block';
-            document.getElementById('btn-no').style.display = 'block';
-            playClick();
-        }
-
-        function judge(isCorrect) {
-            if (isCorrect) { score++; LukeCore.Stats.addStars(3); playSuccess(); } else playClick();
-            nextQuestion();
-        }
-
-        function startLevel() {
-            score = 0; round = 0;
-            document.getElementById('level-title').innerText = LEVELS_CONFIG[currentLevel]?.title || "Level " + currentLevel;
-            nextQuestion();
-        }
-
-        function nextQuestion() {
-            if (round >= 5) {
-                if (score >= 4) {
-                    if (currentLevel < 3) { alert(`🎉 晉級下一關！`); currentLevel++; startLevel(); }
-                    else { alert("🏆 恭喜通關！"); location.href = 'index.html'; }
-                } else { alert("再練習一次！"); startLevel(); }
-                return;
             }
-            round++;
-            document.getElementById('score-board').innerText = `題數: ${round}/5 (得分: ${score})`;
-            clearCanvas(); document.getElementById('answer-reveal').style.display = 'none';
-            document.getElementById('btn-yes').style.display = 'none'; document.getElementById('btn-no').style.display = 'none';
-            document.getElementById('btn-clear').style.display = 'block';
-            document.getElementById('status-bar').innerText = isAIReady ? "💡 寫完後按「AI 改考卷」" : "👌 寫完後按「看答案」";
-            document.getElementById('btn-ai').style.display = isAIReady ? 'block' : 'none';
-            document.getElementById('btn-show').style.display = isAIReady ? 'none' : 'block';
-            const qData = generateQuestion(currentLevel);
-            document.getElementById('question-box').innerText = qData.q;
-            currentAnswer = qData.a;
+
+            let correctCount = 0;
+            const filledIndices = allQuestions.map((q, i) => q.imgData ? i : -1).filter(i => i !== -1);
+
+            for (let i = 0; i < filledIndices.length; i++) {
+                const idx = filledIndices[i];
+                const q = allQuestions[idx];
+
+                document.getElementById('grad-progress').innerText = `${Math.round((i / filledIndices.length) * 100)}%`;
+
+                try {
+                    const { data: { text } } = await worker.recognize(q.imgData);
+                    const recognized = text.trim().replace(/\D/g, '');
+                    if (parseInt(recognized) === q.a) {
+                        q.result = 'correct';
+                        correctCount++;
+                    } else {
+                        q.result = 'wrong';
+                        console.log(`Q${idx + 1} Wrong: expected ${q.a}, saw ${recognized}`);
+                    }
+                } catch (e) {
+                    q.result = 'wrong';
+                }
+            }
+
+            // Finish
+            document.getElementById('grading-modal').style.display = 'none';
+            alert(`測驗結束！\n答對題數：${correctCount} / 50\n獲得星星：${correctCount * 2}`);
+            LukeCore.Stats.addStars(correctCount * 2);
+            renderPage(currentPage);
+
+            // Show reset button?
+            document.getElementById('btn-submit-exam').innerText = "再挑戰一次";
+            document.getElementById('btn-submit-exam').onclick = () => location.reload();
         }
 
+        // --- Question Generation (Simplified from original) ---
         function generateQuestion(level) {
-            let config = LEVELS_CONFIG[level] || { min: 10, max: 20, type: 'ADD_CARRY' };
-            const { min, max, type } = config;
-            if (type === 'ADD_CARRY') {
-                let a = r(min, max); let b = r(5, 9); while ((a % 10) + b < 10) b++;
+            if (level === 1) {
+                let a = r(1, 10), b = r(1, 10);
                 return { q: `${a} + ${b} = ?`, a: a + b };
-            } else if (type === 'SUB_BORROW') {
-                let a = r(min, max); let b = r(5, 9); while ((a % 10) >= b) a = r(min, max);
-                return { q: `${a} - ${b} = ?`, a: a - b };
+            } else if (level === 2) {
+                let a = r(10, 30), b = r(5, 15);
+                return Math.random() > 0.5 ? { q: `${a} + ${b} = ?`, a: a + b } : { q: `${a} - ${b} = ?`, a: a - b };
             } else {
-                let a = r(10, 20); let b = r(5, 10); let c = r(2, 8);
-                return (Math.random() > 0.5) ? { q: `${a} + ${b} - ${c} = ?`, a: a + b - c } : { q: `${a} - ${b} + ${c} = ?`, a: a - b + c };
+                let a = r(10, 20), b = r(5, 10), c = r(2, 8);
+                return { q: `${a} + ${b} - ${c} = ?`, a: a + b - c };
             }
         }
         function r(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
 
+        // --- Canvas Logic ---
         function getCanvasWithWhiteBackground() {
             const w = canvas.width, h = canvas.height;
             const t = document.createElement('canvas'); t.width = w; t.height = h;
-            const c = t.getContext('2d'); c.fillStyle = '#ffffff'; c.fillRect(0, 0, w, h); c.drawImage(canvas, 0, 0);
-            return t.toDataURL('image/png');
+            const c = t.getContext('2d');
+            c.fillStyle = '#ffffff';
+            c.fillRect(0, 0, w, h);
+            c.drawImage(canvas, 0, 0);
+            return t.toDataURL('image/png', 0.5); // lower quality to save storage
         }
-        function resizeCanvas() { canvas.width = canvas.parentElement.clientWidth; canvas.height = canvas.parentElement.clientHeight; setupCtx(); }
-        function setupCtx() { ctx.lineWidth = 10; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.strokeStyle = '#000'; }
+        function resizeCanvas() {
+            const rect = canvas.parentElement.getBoundingClientRect();
+            canvas.width = rect.width;
+            canvas.height = rect.height;
+            setupCtx();
+        }
+        function setupCtx() { ctx.lineWidth = 12; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.strokeStyle = '#333'; }
         function setupCanvas() {
-            const start = (e) => { e.preventDefault(); isDrawing = true; ctx.beginPath(); const p = pos(e); ctx.moveTo(p.x, p.y); };
-            const move = (e) => { if (!isDrawing) return; e.preventDefault(); const p = pos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); };
-            const end = () => isDrawing = false;
-            canvas.addEventListener('mousedown', start); canvas.addEventListener('mousemove', move); canvas.addEventListener('mouseup', end);
-            canvas.addEventListener('touchstart', start, { passive: false }); canvas.addEventListener('touchmove', move, { passive: false }); canvas.addEventListener('touchend', end);
+            const getPos = (e) => {
+                const rect = canvas.getBoundingClientRect();
+                const x = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
+                const y = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
+                return { x, y };
+            };
+            const start = (e) => { e.preventDefault(); isDrawing = true; ctx.beginPath(); const p = getPos(e); ctx.moveTo(p.x, p.y); };
+            const move = (e) => { if (!isDrawing) return; e.preventDefault(); const p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); };
+            const stop = () => isDrawing = false;
+            canvas.addEventListener('mousedown', start);
+            canvas.addEventListener('mousemove', move);
+            window.addEventListener('mouseup', stop);
+            canvas.addEventListener('touchstart', start, { passive: false });
+            canvas.addEventListener('touchmove', move, { passive: false });
+            canvas.addEventListener('touchend', stop);
         }
-        function pos(e) {
-            const r = canvas.getBoundingClientRect();
-            const cx = e.touches ? e.touches[0].clientX : e.clientX, cy = e.touches ? e.touches[0].clientY : e.clientY;
-            return { x: cx - r.left, y: cy - r.top };
-        }
-        function clearCanvas() { ctx.clearRect(0, 0, canvas.width, canvas.height); playClick(); }
-        init();
+        function clearCanvas() { ctx.clearRect(0, 0, canvas.width, canvas.height); }
+
+        window.onload = () => {
+            setupExam();
+            resizeCanvas();
+            setupCanvas();
+            window.onresize = resizeCanvas;
+        };
     </script>
 </body>
 
