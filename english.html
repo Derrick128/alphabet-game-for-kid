@@ -239,8 +239,8 @@
             LukeCore.Daily.markComplete('english', duration);
 
             LukeCore.Audio.playSuccess();
-            alert(`聽力練習結束！\n答對題數：${correctCount} / 10\n用時：${Math.floor(duration / 60)}分${duration % 60}秒\n獲得星星：${correctCount * 3}`);
-            LukeCore.Stats.addStars(correctCount * 3);
+            alert(`聽力練習結束！\n答對題數：${correctCount} / 10\n用時：${Math.floor(duration / 60)}分${duration % 60}秒`);
+            // LukeCore.Stats.addStars(correctCount * 3); // REPLACED BY DAILY CHEST
 
             renderList();
 
