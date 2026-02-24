@@ -16,26 +16,34 @@
 
         main {
             width: 90%;
-            max-width: 600px;
+            max-width: 650px;
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-            gap: 20px;
+            gap: 15px;
             padding-bottom: 80px;
         }
 
         .card-icon {
-            font-size: 2.5rem;
-            margin-bottom: 10px;
+            font-size: 2.2rem;
+            margin-bottom: 8px;
         }
 
         .card-title {
-            font-size: 1.1rem;
+            font-size: 1rem;
             font-weight: bold;
-            margin-bottom: 5px;
+            margin-bottom: 3px;
         }
 
-        .card-desc {
-            font-size: 0.85rem;
+        .card-status {
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        .status-done {
+            color: var(--accent);
+        }
+
+        .status-todo {
             color: var(--text-light);
         }
 
@@ -79,6 +87,38 @@
         #shop-btn {
             bottom: 20px;
             left: 20px;
+        }
+
+        /* Treasure Chest */
+        #chest-container {
+            width: 90%;
+            max-width: 600px;
+            background: #fff;
+            border-radius: 20px;
+            padding: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 10px var(--shadow);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border: 3px solid #ffd54f;
+        }
+
+        .chest-icon {
+            font-size: 3rem;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .chest-ready {
+            animation: shake 1s infinite;
+            cursor: pointer;
+        }
+
+        .chest-locked {
+            opacity: 0.5;
+            cursor: not-allowed;
+            filter: grayscale(1);
         }
 
         /* Profile Switcher */
@@ -153,29 +193,37 @@
         <p>今天想玩什麼呢？</p>
     </header>
 
+    <div id="chest-container">
+        <div style="flex:1">
+            <div style="font-weight:bold; font-size:1.1rem;">今日寶箱 🎁</div>
+            <div style="font-size:0.85rem; color:var(--text-light);" id="chest-desc">完成所有任務即可開啟！</div>
+        </div>
+        <div id="chest-icon" class="chest-icon chest-locked" onclick="tryOpenChest()">📦</div>
+    </div>
+
     <main>
         <a href="english.html" class="card eng" onclick="playClick()">
             <div class="card-icon">🔠</div>
             <div class="card-title">英文聽力</div>
-            <div class="card-desc">對話・分類遊戲</div>
+            <div id="status-english" class="card-status status-todo">未完成</div>
         </a>
 
         <a href="math.html" class="card math" onclick="playClick()">
             <div class="card-icon">🧮</div>
             <div class="card-title">數學運算</div>
-            <div class="card-desc">加減法・手寫計算</div>
+            <div id="status-math" class="card-status status-todo">未完成</div>
         </a>
 
         <a href="writing.html?type=EN" class="card write-en" onclick="playClick()">
             <div class="card-icon">✍️</div>
             <div class="card-title">英文練字</div>
-            <div class="card-desc">ABC 筆順練習</div>
+            <div id="status-write-en" class="card-status status-todo">未完成</div>
         </a>
 
         <a href="writing.html?type=ZH" class="card write-zh" onclick="playClick()">
             <div class="card-icon">ㄅ</div>
             <div class="card-title">注音符號</div>
-            <div class="card-desc">ㄅㄆㄇ 手寫練習</div>
+            <div id="status-write-zh" class="card-status status-todo">未完成</div>
         </a>
     </main>
 
@@ -209,7 +257,62 @@
             document.getElementById('shop-welcome').innerText = config.welcome;
 
             document.getElementById('star-count').innerText = LukeCore.Stats.getStars();
+
+            updateChecklist();
+            updateChest();
             renderPet();
+        }
+
+        function updateChecklist() {
+            const tasks = ['english', 'math', 'write-en', 'write-zh'];
+            tasks.forEach(t => {
+                const status = LukeCore.Daily.getTaskStatus(t);
+                const el = document.getElementById(`status-${t}`);
+                if (status.completed) {
+                    const min = Math.floor(status.duration / 60);
+                    const sec = status.duration % 60;
+                    el.innerText = `✅ 完成 (${min}分${sec}秒)`;
+                    el.className = 'card-status status-done';
+                } else {
+                    el.innerText = '⭕ 未完成';
+                    el.className = 'card-status status-todo';
+                }
+            });
+        }
+
+        function updateChest() {
+            const isReady = LukeCore.Daily.isChestReady();
+            const icon = document.getElementById('chest-icon');
+            const desc = document.getElementById('chest-desc');
+            const opened = localStorage.getItem(`chest_${LukeCore.Daily.getToday()}_${LukeCore.Profile.current}`);
+
+            if (opened) {
+                icon.innerText = '📂';
+                icon.className = 'chest-icon';
+                desc.innerText = '今日獎勵已領取！明天再來！';
+            } else if (isReady) {
+                icon.innerText = '🎁';
+                icon.className = 'chest-icon chest-ready';
+                desc.innerText = '任務達成！快點擊開寶箱！';
+            } else {
+                icon.innerText = '📦';
+                icon.className = 'chest-icon chest-locked';
+                desc.innerText = '完成所有任務即可開啟！';
+            }
+        }
+
+        function tryOpenChest() {
+            if (LukeCore.Daily.isChestReady()) {
+                const stars = LukeCore.Daily.openChest();
+                LukeCore.Audio.playSuccess();
+                alert(`🎊 恭喜！開寶箱獲得了 ${stars} 顆星星！`);
+                updateUI();
+            } else {
+                const opened = localStorage.getItem(`chest_${LukeCore.Daily.getToday()}_${LukeCore.Profile.current}`);
+                if (opened) showFeedback("明天再來開寶箱吧！");
+                else showFeedback("還要努力完成任務喔！");
+                playClick();
+            }
         }
 
         function toggleProfile() {
