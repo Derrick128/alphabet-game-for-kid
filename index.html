@@ -169,6 +169,58 @@
                 transform: translateY(0px) rotate(0deg);
             }
         }
+
+        /* Admin Reset Panel */
+        #admin-panel {
+            display: none;
+            background: #fff3e0;
+            border: 2px solid #ffb74d;
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 20px;
+            width: 90%;
+            max-width: 600px;
+            box-sizing: border-box;
+            text-align: center;
+        }
+
+        .admin-title {
+            font-weight: bold;
+            color: #e65100;
+            margin-bottom: 10px;
+        }
+
+        .reset-btn-group {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .btn-reset {
+            background: #ef5350;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: 0.3s;
+        }
+
+        .btn-reset:hover {
+            background: #d32f2f;
+        }
+
+        .btn-reset:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .hold-hint {
+            font-size: 0.75rem;
+            color: #777;
+            margin-top: 5px;
+        }
     </style>
 </head>
 
@@ -199,6 +251,18 @@
             <div style="font-size:0.85rem; color:var(--text-light);" id="chest-desc">完成所有任務即可開啟！</div>
         </div>
         <div id="chest-icon" class="chest-icon chest-locked" onclick="tryOpenChest()">📦</div>
+    </div>
+
+    <!-- Admin Panel (Visible only in Test Mode) -->
+    <div id="admin-panel">
+        <div class="admin-title">🛠️ 管理員控制台 (僅測試模式可見)</div>
+        <div class="reset-btn-group">
+            <button class="btn-reset" onmousedown="startReset('luke')" onmouseup="stopReset()"
+                ontouchstart="startReset('luke')" ontouchend="stopReset()">按住 3 秒初始化 Luke 紀錄</button>
+            <button class="btn-reset" onmousedown="startReset('test')" onmouseup="stopReset()"
+                ontouchstart="startReset('test')" ontouchend="stopReset()">按住 3 秒初始化 Test 紀錄</button>
+        </div>
+        <div class="hold-hint" id="reset-hint">請按住紅色按鈕 3 秒鐘以執行初始化</div>
     </div>
 
     <main>
@@ -257,6 +321,9 @@
             document.getElementById('shop-welcome').innerText = config.welcome;
 
             document.getElementById('star-count').innerText = LukeCore.Stats.getStars();
+
+            // Show Admin Panel
+            document.getElementById('admin-panel').style.display = currentProfile === 'test' ? 'block' : 'none';
 
             updateChecklist();
             updateChest();
@@ -383,6 +450,28 @@
             const isPlaying = LukeCore.Audio.toggleBGM();
             document.getElementById('music-toggle').innerText = isPlaying ? "⏸️" : "🎵";
             playClick();
+        }
+
+        // --- Foolproof Reset Logic ---
+        let resetTimer = null;
+        function startReset(id) {
+            const hint = document.getElementById('reset-hint');
+            hint.innerText = `正在重置 ${id}... 請持續按住按鈕...`;
+            hint.style.color = 'red';
+
+            resetTimer = setTimeout(() => {
+                if (confirm(`⚠️ 確定要徹底清空 ${id === 'luke' ? 'Luke' : '測試'} 模式的所有紀錄嗎？這無法還原喔！`)) {
+                    LukeCore.Profile.reset(id);
+                }
+                stopReset();
+            }, 3000);
+        }
+
+        function stopReset() {
+            clearTimeout(resetTimer);
+            const hint = document.getElementById('reset-hint');
+            hint.innerText = "請按住紅色按鈕 3 秒鐘以執行初始化";
+            hint.style.color = '#777';
         }
 
         // Initialize
