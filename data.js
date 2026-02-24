@@ -36,6 +36,19 @@ let GAME_DATA = {
         EN: ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"],
         ZH: ["ㄅ", "ㄆ", "ㄇ", "ㄈ", "ㄉ", "ㄊ", "ㄋ", "ㄌ", "ㄍ", "ㄎ", "ㄏ", "ㄐ", "ㄑ", "ㄒ", "ㄓ", "ㄔ", "ㄕ", "ㄖ", "ㄗ", "ㄘ", "ㄙ", "ㄧ", "ㄨ", "ㄩ", "ㄚ", "ㄛ", "ㄜ", "ㄝ", "ㄞ", "ㄟ", "ㄠ", "ㄡ", "ㄢ", "ㄣ", "ㄤ", "ㄥ", "ㄦ"]
     },
+    // 6-year-old Starter English Data
+    STARTER_ENGLISH_QA: [
+        { q: "Apple (蘋果)", a: "Apple", wrong: ["Banana", "Orange"] },
+        { q: "Dog (狗)", a: "Dog", wrong: ["Cat", "Rabbit"] },
+        { q: "One (一)", a: "One", wrong: ["Two", "Three"] },
+        { q: "Red (紅色)", a: "Red", wrong: ["Blue", "Yellow"] },
+        { q: "Hello (你好)", a: "Hello", wrong: ["Bye", "No"] },
+        { q: "Cat (貓)", a: "Cat", wrong: ["Dog", "Pig"] },
+        { q: "Bird (鳥)", a: "Bird", wrong: ["Fish", "Ant"] },
+        { q: "Blue (藍色)", a: "Blue", wrong: ["Green", "Black"] },
+        { q: "Milk (牛奶)", a: "Milk", wrong: ["Juice", "Water"] },
+        { q: "Book (書本)", a: "Book", wrong: ["Pen", "Bag"] }
+    ],
     loadFromCloud: null,
     isLoaded: false
 };
@@ -81,6 +94,12 @@ GAME_DATA.loadFromCloud = async function () {
                 if (cleanSort.length > 0) GAME_DATA.ENGLISH.SORT_LIST = cleanSort;
             }
         }
+
+        // If Cloud English list is too small or empty, use Starters
+        if (GAME_DATA.ENGLISH.QA_LIST.length < 5) {
+            GAME_DATA.ENGLISH.QA_LIST = [...GAME_DATA.STARTER_ENGLISH_QA, ...GAME_DATA.ENGLISH.QA_LIST];
+        }
+
         GAME_DATA.isLoaded = true;
     } catch (e) {
         console.error("❌ 連線錯誤:", e);
