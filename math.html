@@ -1,54 +1,136 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>數學挑戰 - 智能手寫版</title>
-    
+
+    <link rel="stylesheet" href="styles.css">
     <script src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'></script>
+    <script src="core.js"></script>
     <script src="data.js"></script>
-    <script src="sound.js"></script>
-    
+
     <style>
-        body { font-family: 'Arial Rounded MT Bold', sans-serif; background-color: #fff3e0; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; touch-action: none; }
-        .container { width: 90%; max-width: 500px; background: white; padding: 20px; border-radius: 20px; text-align: center; border: 5px solid #d84315; box-sizing: border-box; position: relative; }
-        
-        .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        .back-btn { padding: 5px 12px; background: #b0bec5; color: white; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 0.9rem; }
-        
-        #question-box { font-size: 2.5em; margin: 10px 0; color: #e65100; font-weight: bold; min-height: 60px; }
-        
-        #canvas-wrapper { position: relative; width: 100%; height: 250px; border: 4px dashed #ffab91; border-radius: 15px; margin-bottom: 10px; background: #fff; cursor: crosshair; }
-        canvas { width: 100%; height: 100%; touch-action: none; border-radius: 10px; }
-        
-        #status-bar { height: 30px; font-size: 0.85rem; color: #999; margin-bottom: 5px; font-weight: bold; transition: color 0.3s; line-height: 1.3;}
+        body {
+            background-color: var(--bg-orange);
+        }
 
-        #answer-reveal { display: none; margin: 10px 0; padding: 15px; background: #fff8e1; border-radius: 10px; border: 2px solid #ffecb3; }
-        .correct-ans { font-size: 2.2em; color: #2e7d32; font-weight: bold; }
+        .container {
+            border: 5px solid #d84315;
+        }
 
-        .btn-group { display: flex; gap: 10px; justify-content: center; margin-top: 10px; flex-wrap: wrap; }
-        .btn { padding: 12px 0; font-size: 1.2em; border: none; border-radius: 10px; color: white; cursor: pointer; flex: 1; box-shadow: 0 4px 0 rgba(0,0,0,0.2); transition: 0.1s; }
-        .btn:active { transform: translateY(3px); box-shadow: none; }
-        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-        
-        .btn-clear { background: #90a4ae; flex: 0.6; }
-        .btn-show { background: #039be5; font-weight: bold; display: block; }
-        .btn-ai { background: #ff9800; font-weight: bold; display: none; }
-        
-        .btn-yes { background: #66bb6a; display: none; }
-        .btn-no { background: #ef5350; display: none; }
+        #question-box {
+            font-size: 2.5em;
+            margin: 10px 0;
+            color: #e65100;
+            font-weight: bold;
+            min-height: 60px;
+        }
 
-        .spinner { border: 3px solid #ffffff40; border-top: 3px solid #fff; border-radius: 50%; width: 16px; height: 16px; animation: spin 1s linear infinite; display: inline-block; vertical-align: middle; margin-right: 5px; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        
-        .skip-ai { font-size: 0.75em; color: #666; text-decoration: underline; cursor: pointer; margin-top: 5px; }
+        #canvas-wrapper {
+            position: relative;
+            width: 100%;
+            height: 250px;
+            border: 4px dashed #ffab91;
+            border-radius: 15px;
+            margin-bottom: 15px;
+            background: #fff;
+            cursor: crosshair;
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%;
+            touch-action: none;
+            border-radius: 10px;
+        }
+
+        #status-bar {
+            height: 35px;
+            font-size: 0.9rem;
+            color: var(--text-light);
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+        #answer-reveal {
+            display: none;
+            margin: 10px 0;
+            padding: 15px;
+            background: #fff8e1;
+            border-radius: 10px;
+            border: 2px solid #ffecb3;
+        }
+
+        .correct-ans {
+            font-size: 2.2em;
+            color: var(--accent);
+            font-weight: bold;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            flex: 1;
+        }
+
+        .btn-clear {
+            flex: 0.6;
+        }
+
+        .btn-ai {
+            display: none;
+        }
+
+        .btn-yes,
+        .btn-no {
+            display: none;
+        }
+
+        .spinner {
+            border: 3px solid #ffffff40;
+            border-top: 3px solid #fff;
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            vertical-align: middle;
+            margin-right: 5px;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .skip-ai {
+            font-size: 0.75em;
+            color: var(--text-light);
+            text-decoration: underline;
+            cursor: pointer;
+            margin-top: 5px;
+        }
     </style>
 </head>
+
 <body>
     <div class="container">
         <div class="top-bar">
-            <a href="index.html" class="back-btn" onclick="playClickSafe()">🏠</a>
-            <div id="score-board" style="color:#555;">0/5</div>
+            <a href="index.html" class="nav-link" onclick="playClick()">🏠</a>
+            <div id="score-board" style="color:var(--text-light); font-weight: bold;">0/5</div>
         </div>
 
         <div id="level-title" style="color:#bf360c; font-weight:bold; margin-bottom:5px;">Level 1</div>
@@ -56,7 +138,9 @@
 
         <div id="canvas-wrapper">
             <canvas id="writeCanvas"></canvas>
-            <div style="position: absolute; bottom: 5px; right: 5px; color: #eee; font-size: 0.8em; pointer-events: none;">在此書寫</div>
+            <div
+                style="position: absolute; bottom: 5px; right: 5px; color: #eee; font-size: 0.8em; pointer-events: none;">
+                在此書寫</div>
         </div>
 
         <div id="status-bar">
@@ -69,280 +153,121 @@
         </div>
 
         <div class="btn-group">
-            <button class="btn btn-clear" id="btn-clear" onclick="clearCanvas()">重寫</button>
-            
-            <button id="btn-ai" class="btn btn-ai" onclick="recognizeHandwriting()">
+            <button class="btn btn-gray btn-clear" id="btn-clear" onclick="clearCanvas()">重寫</button>
+
+            <button id="btn-ai" class="btn btn-secondary btn-ai" onclick="recognizeHandwriting()">
                 <span id="ai-loading" class="spinner" style="display:none"></span>
                 <span id="ai-text">AI 改考卷</span>
             </button>
 
-            <button id="btn-show" class="btn btn-show" onclick="showAnswer()">看答案</button>
+            <button id="btn-show" class="btn btn-primary btn-show" onclick="showAnswer()">看答案</button>
 
-            <button id="btn-yes" class="btn btn-yes" onclick="judge(true)">⭕ 答對</button>
-            <button id="btn-no" class="btn btn-no" onclick="judge(false)">❌ 答錯</button>
+            <button id="btn-yes" class="btn btn-accent btn-yes" onclick="judge(true)">⭕ 答對</button>
+            <button id="btn-no" class="btn btn-danger btn-no" onclick="judge(false)">❌ 答錯</button>
         </div>
     </div>
 
     <script>
-        // 音效安全播放
-        function playClickSafe() { 
-            try { if(typeof playClick === 'function') playClick(); } 
-            catch(e) { } 
-        }
-        function playSuccessSafe() { 
-            try { if(typeof playSuccess === 'function') playSuccess(); } 
-            catch(e) { } 
-        }
-
-        // 1. 安全初始化變數
         let LEVELS_CONFIG = {};
         let currentLevel = 1, score = 0, round = 0, currentAnswer = 0;
         const canvas = document.getElementById('writeCanvas');
         const ctx = canvas.getContext('2d');
-        let isDrawing = false;
-        
-        // AI 變數
-        let worker = null;
-        let isAIReady = false;
-        let aiLoadTimeout = null;
+        let isDrawing = false, worker = null, isAIReady = false, aiLoadTimeout = null;
 
         function init() {
-            console.log("🚀 數學遊戲初始化...");
-            
-            // 防崩潰讀取：先給預設值
             LEVELS_CONFIG = {
                 1: { title: "L1: 基礎運算", type: "ADD_CARRY", min: 1, max: 10 },
                 2: { title: "L2: 進階運算", type: "SUB_BORROW", min: 10, max: 20 },
                 3: { title: "L3: 混合挑戰", type: "MIXED_3", min: 10, max: 20 }
             };
-
-            // 嘗試讀取 data.js
-            if (typeof GAME_DATA !== 'undefined' && GAME_DATA.MATH && GAME_DATA.MATH.LEVELS) {
-                LEVELS_CONFIG = GAME_DATA.MATH.LEVELS;
-                console.log("✅ 成功讀取 data.js 的數學設定");
-            } else {
-                console.log("⚠️ 使用預設數學設定");
-            }
-
-            resizeCanvas();
-            window.addEventListener('resize', resizeCanvas);
-            setupCanvas();
-            
-            // 🔴 先不開始遊戲，等 AI 載入或超時
-            document.getElementById('question-box').innerText = "載入中...";
-            
-            // 背景啟動 AI，設定 15 秒超時
-            initAI();
-            
-            // 15 秒後如果還沒載入，自動跳過
-            aiLoadTimeout = setTimeout(() => {
-                if (!isAIReady) {
-                    console.log("⏱️ AI 載入超時，自動切換手動模式");
-                    skipAI();
-                }
-            }, 15000);
-            
-            // 5 秒後顯示跳過按鈕
-            setTimeout(() => {
-                if (!isAIReady) {
-                    document.getElementById('skip-ai').style.display = 'block';
-                }
-            }, 5000);
+            if (typeof GAME_DATA !== 'undefined' && GAME_DATA.MATH && GAME_DATA.MATH.LEVELS) LEVELS_CONFIG = GAME_DATA.MATH.LEVELS;
+            resizeCanvas(); window.addEventListener('resize', resizeCanvas); setupCanvas();
+            document.getElementById('question-box').innerText = "載入中..."; initAI();
+            aiLoadTimeout = setTimeout(() => { if (!isAIReady) skipAI(); }, 15000);
+            setTimeout(() => { if (!isAIReady) document.getElementById('skip-ai').style.display = 'block'; }, 5000);
         }
 
         function skipAI() {
             if (aiLoadTimeout) clearTimeout(aiLoadTimeout);
             isAIReady = false;
             document.getElementById('status-bar').innerText = "👌 使用手動對答模式";
-            document.getElementById('status-bar').style.color = "#666";
-            document.getElementById('skip-ai').style.display = 'none';
             document.getElementById('btn-show').style.display = 'block';
             document.getElementById('btn-ai').style.display = 'none';
-            startLevel(); // 開始遊戲
+            startLevel();
         }
 
         async function initAI() {
             try {
-                // 檢查 Tesseract 是否載入
-                if (typeof Tesseract === 'undefined') {
-                    console.log("⚠️ Tesseract CDN 未載入");
-                    throw new Error("Tesseract not loaded");
-                }
-
-                console.log("📥 開始載入 AI 模型...");
-                document.getElementById('status-bar').innerText = "AI 腦袋下載中... 0%";
-                
-                // 設定更短的超時時間
-                const workerPromise = Tesseract.createWorker('eng', 1, {
-                    logger: m => {
-                        if (m.status && m.status.includes('loading')) {
-                            const p = m.progress ? Math.floor(m.progress * 100) : 0;
-                            document.getElementById('status-bar').innerText = `AI 下載中... ${p}%`;
-                            console.log(`AI 載入進度: ${p}%`);
-                        }
-                    },
-                    // 🔴 增加這個設定，使用較快的 CDN
+                worker = await Tesseract.createWorker('eng', 1, {
                     langPath: 'https://tessdata.projectnaptha.com/4.0.0'
                 });
-                
-                // 10 秒超時保護
-                const timeoutPromise = new Promise((_, reject) => 
-                    setTimeout(() => reject(new Error('Worker creation timeout')), 10000)
-                );
-                
-                worker = await Promise.race([workerPromise, timeoutPromise]);
-                console.log("✅ Worker 創建成功");
-                
-                // 設定白名單 (只認數字)
-                await worker.setParameters({ 
-                    tessedit_char_whitelist: '0123456789',
-                    tessedit_pageseg_mode: '8' // 單字模式，更快
-                });
-                console.log("✅ 參數設定完成");
-
-                isAIReady = true;
-                if (aiLoadTimeout) clearTimeout(aiLoadTimeout);
-                
+                await worker.setParameters({ tessedit_char_whitelist: '0123456789', tessedit_pageseg_mode: '8' });
+                isAIReady = true; if (aiLoadTimeout) clearTimeout(aiLoadTimeout);
                 document.getElementById('status-bar').innerText = "💡 AI 準備好了！";
-                document.getElementById('status-bar').style.color = "#4caf50";
-                document.getElementById('skip-ai').style.display = 'none';
-                
-                // 顯示 AI 按鈕
+                document.getElementById('status-bar').style.color = "var(--accent)";
                 document.getElementById('btn-show').style.display = 'none';
                 document.getElementById('btn-ai').style.display = 'block';
-                
-                startLevel(); // AI 準備好了，開始遊戲
-
-            } catch (err) {
-                console.warn("❌ AI 載入失敗:", err.message);
-                console.log("切換到手動模式");
-                skipAI();
-            }
+                startLevel();
+            } catch (err) { skipAI(); }
         }
 
-        // --- AI 辨識 ---
         async function recognizeHandwriting() {
-            if(!worker || !isAIReady) {
-                console.log("AI 未就緒");
-                return;
-            }
-
+            if (!worker || !isAIReady) return;
             const btn = document.getElementById('btn-ai');
             const txt = document.getElementById('ai-text');
             const spin = document.getElementById('ai-loading');
             const statusBar = document.getElementById('status-bar');
-
-            // UI 鎖定
-            btn.disabled = true;
-            btn.style.opacity = "0.7";
-            txt.innerText = "辨識中...";
-            spin.style.display = "inline-block";
-            playClickSafe();
-
+            btn.disabled = true; txt.innerText = "辨識中..."; spin.style.display = "inline-block"; playClick();
             try {
                 const dataURL = getCanvasWithWhiteBackground();
-                console.log("🔍 開始 AI 辨識...");
-                
                 const { data: { text } } = await worker.recognize(dataURL);
-                const recognizedNum = text.trim().replace(/\D/g, ''); // 只保留數字
-                
-                console.log(`AI 辨識結果: "${recognizedNum}"`);
-
-                if (!recognizedNum) {
-                    statusBar.innerText = "❓ 沒看到數字，寫大一點？";
-                    statusBar.style.color = "#ef5350";
-                } else if (parseInt(recognizedNum) === currentAnswer) {
-                    statusBar.innerText = `✅ 答對了！是 ${recognizedNum}`;
-                    statusBar.style.color = "#2e7d32";
-                    playSuccessSafe();
-                    score++;
-                    setTimeout(nextQuestion, 1500);
-                    return;
-                } else {
-                    statusBar.innerText = `❌ 我看到 ${recognizedNum}，但答案不對喔`;
-                    statusBar.style.color = "#c62828";
-                }
-            } catch (e) {
-                console.error("AI 辨識錯誤:", e);
-                statusBar.innerText = "⚠️ AI 累了，請點「看答案」手動對";
-                statusBar.style.color = "#ff9800";
-            } finally {
-                btn.disabled = false;
-                btn.style.opacity = "1";
-                txt.innerText = "AI 改考卷";
-                spin.style.display = "none";
-            }
+                const recognizedNum = text.trim().replace(/\D/g, '');
+                if (!recognizedNum) { statusBar.innerText = "❓ 沒看到數字"; statusBar.style.color = "var(--danger)"; }
+                else if (parseInt(recognizedNum) === currentAnswer) {
+                    statusBar.innerText = `✅ 答對了！是 ${recognizedNum}`; statusBar.style.color = "var(--accent)";
+                    playSuccess(); LukeCore.Stats.addStars(5); score++; setTimeout(nextQuestion, 1500); return;
+                } else { statusBar.innerText = `❌ 我看到 ${recognizedNum}`; statusBar.style.color = "var(--danger)"; }
+            } catch (e) { statusBar.innerText = "⚠️ AI 累了"; } finally { btn.disabled = false; txt.innerText = "AI 改考卷"; spin.style.display = "none"; }
         }
 
-        // --- 手動模式 ---
         function showAnswer() {
             document.getElementById('correct-text').innerText = currentAnswer;
             document.getElementById('answer-reveal').style.display = 'block';
-            showAnswerButtons();
-            playClickSafe();
-        }
-
-        function showAnswerButtons() {
             document.getElementById('btn-show').style.display = 'none';
             document.getElementById('btn-ai').style.display = 'none';
             document.getElementById('btn-clear').style.display = 'none';
             document.getElementById('btn-yes').style.display = 'block';
             document.getElementById('btn-no').style.display = 'block';
+            playClick();
         }
 
         function judge(isCorrect) {
-            if(isCorrect) {
-                score++;
-                playSuccessSafe();
-            } else {
-                playClickSafe();
-            }
+            if (isCorrect) { score++; LukeCore.Stats.addStars(3); playSuccess(); } else playClick();
             nextQuestion();
         }
 
-        // --- 遊戲邏輯 ---
         function startLevel() {
             score = 0; round = 0;
-            const title = (LEVELS_CONFIG[currentLevel] && LEVELS_CONFIG[currentLevel].title) ? LEVELS_CONFIG[currentLevel].title : "Level " + currentLevel;
-            document.getElementById('level-title').innerText = title;
+            document.getElementById('level-title').innerText = LEVELS_CONFIG[currentLevel]?.title || "Level " + currentLevel;
             nextQuestion();
         }
 
         function nextQuestion() {
             if (round >= 5) {
                 if (score >= 4) {
-                    if (currentLevel < 3) {
-                        alert(`🎉 晉級下一關！`); currentLevel++; startLevel();
-                    } else {
-                        alert("🏆 恭喜通關！"); location.href = 'index.html';
-                    }
-                } else {
-                    alert("再練習一次！"); startLevel();
-                }
+                    if (currentLevel < 3) { alert(`🎉 晉級下一關！`); currentLevel++; startLevel(); }
+                    else { alert("🏆 恭喜通關！"); location.href = 'index.html'; }
+                } else { alert("再練習一次！"); startLevel(); }
                 return;
             }
             round++;
             document.getElementById('score-board').innerText = `題數: ${round}/5 (得分: ${score})`;
-            
-            clearCanvas();
-            document.getElementById('answer-reveal').style.display = 'none';
-            document.getElementById('btn-yes').style.display = 'none';
-            document.getElementById('btn-no').style.display = 'none';
+            clearCanvas(); document.getElementById('answer-reveal').style.display = 'none';
+            document.getElementById('btn-yes').style.display = 'none'; document.getElementById('btn-no').style.display = 'none';
             document.getElementById('btn-clear').style.display = 'block';
-            
-            // 狀態列重置
             document.getElementById('status-bar').innerText = isAIReady ? "💡 寫完後按「AI 改考卷」" : "👌 寫完後按「看答案」";
-            document.getElementById('status-bar').style.color = "#999";
-
-            // 如果 AI 好了就顯示 AI 按鈕，不然顯示手動
-            if(isAIReady) {
-                document.getElementById('btn-ai').style.display = 'block';
-                document.getElementById('btn-show').style.display = 'none';
-            } else {
-                document.getElementById('btn-ai').style.display = 'none';
-                document.getElementById('btn-show').style.display = 'block';
-            }
-
+            document.getElementById('btn-ai').style.display = isAIReady ? 'block' : 'none';
+            document.getElementById('btn-show').style.display = isAIReady ? 'none' : 'block';
             const qData = generateQuestion(currentLevel);
             document.getElementById('question-box').innerText = qData.q;
             currentAnswer = qData.a;
@@ -351,23 +276,21 @@
         function generateQuestion(level) {
             let config = LEVELS_CONFIG[level] || { min: 10, max: 20, type: 'ADD_CARRY' };
             const { min, max, type } = config;
-            
             if (type === 'ADD_CARRY') {
-                let a = r(min, max); let b = r(5, 9); while((a%10)+b<10) b++;
-                return { q: `${a} + ${b} = ?`, a: a+b };
+                let a = r(min, max); let b = r(5, 9); while ((a % 10) + b < 10) b++;
+                return { q: `${a} + ${b} = ?`, a: a + b };
             } else if (type === 'SUB_BORROW') {
-                let a = r(min, max); let b = r(5, 9); while((a%10)>=b) a=r(min, max);
-                return { q: `${a} - ${b} = ?`, a: a-b };
+                let a = r(min, max); let b = r(5, 9); while ((a % 10) >= b) a = r(min, max);
+                return { q: `${a} - ${b} = ?`, a: a - b };
             } else {
                 let a = r(10, 20); let b = r(5, 10); let c = r(2, 8);
-                return (Math.random()>0.5) ? { q: `${a} + ${b} - ${c} = ?`, a: a+b-c } : { q: `${a} - ${b} + ${c} = ?`, a: a-b+c };
+                return (Math.random() > 0.5) ? { q: `${a} + ${b} - ${c} = ?`, a: a + b - c } : { q: `${a} - ${b} + ${c} = ?`, a: a - b + c };
             }
         }
         function r(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
 
-        // --- 畫布 ---
         function getCanvasWithWhiteBackground() {
-            const w = canvas.width; const h = canvas.height;
+            const w = canvas.width, h = canvas.height;
             const t = document.createElement('canvas'); t.width = w; t.height = h;
             const c = t.getContext('2d'); c.fillStyle = '#ffffff'; c.fillRect(0, 0, w, h); c.drawImage(canvas, 0, 0);
             return t.toDataURL('image/png');
@@ -375,28 +298,20 @@
         function resizeCanvas() { canvas.width = canvas.parentElement.clientWidth; canvas.height = canvas.parentElement.clientHeight; setupCtx(); }
         function setupCtx() { ctx.lineWidth = 10; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.strokeStyle = '#000'; }
         function setupCanvas() {
-            resizeCanvas();
-            const start = (e) => { e.preventDefault(); isDrawing = true; ctx.beginPath(); const {x,y} = pos(e); ctx.moveTo(x,y); };
-            const move = (e) => { if(!isDrawing) return; e.preventDefault(); const {x,y} = pos(e); ctx.lineTo(x,y); ctx.stroke(); };
+            const start = (e) => { e.preventDefault(); isDrawing = true; ctx.beginPath(); const p = pos(e); ctx.moveTo(p.x, p.y); };
+            const move = (e) => { if (!isDrawing) return; e.preventDefault(); const p = pos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); };
             const end = () => isDrawing = false;
-            canvas.addEventListener('mousedown', start); canvas.addEventListener('mousemove', move);
-            canvas.addEventListener('mouseup', end); canvas.addEventListener('touchstart', start, {passive:false});
-            canvas.addEventListener('touchmove', move, {passive:false}); canvas.addEventListener('touchend', end);
+            canvas.addEventListener('mousedown', start); canvas.addEventListener('mousemove', move); canvas.addEventListener('mouseup', end);
+            canvas.addEventListener('touchstart', start, { passive: false }); canvas.addEventListener('touchmove', move, { passive: false }); canvas.addEventListener('touchend', end);
         }
         function pos(e) {
             const r = canvas.getBoundingClientRect();
-            const cx = e.touches ? e.touches[0].clientX : e.clientX;
-            const cy = e.touches ? e.touches[0].clientY : e.clientY;
+            const cx = e.touches ? e.touches[0].clientX : e.clientX, cy = e.touches ? e.touches[0].clientY : e.clientY;
             return { x: cx - r.left, y: cy - r.top };
         }
-        function clearCanvas() { ctx.clearRect(0, 0, canvas.width, canvas.height); playClickSafe(); }
-
-        // 頁面載入完成後執行
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', init);
-        } else {
-            init();
-        }
+        function clearCanvas() { ctx.clearRect(0, 0, canvas.width, canvas.height); playClick(); }
+        init();
     </script>
 </body>
+
 </html>
