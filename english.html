@@ -1,55 +1,142 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>英文聽力互動</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="core.js"></script>
     <script src="data.js"></script>
     <style>
-        body { font-family: 'Arial Rounded MT Bold', sans-serif; background-color: #e3f2fd; margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; touch-action: manipulation; }
-        .container { width: 95%; max-width: 600px; padding: 15px; box-sizing: border-box; display: flex; flex-direction: column; gap: 15px; }
-        .top-bar { display: flex; justify-content: space-between; align-items: center; width: 100%; background: white; padding: 10px 15px; border-radius: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); box-sizing: border-box; }
-        .back-btn { text-decoration: none; font-size: 1.5rem; }
-        .mode-switch { display: flex; gap: 10px; }
-        .mode-btn { padding: 8px 15px; border: none; border-radius: 20px; font-weight: bold; cursor: pointer; opacity: 0.6; transition: 0.3s; }
-        .mode-btn.active { opacity: 1; transform: scale(1.1); box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
-        .mode-qa { background: #4fc3f7; color: #01579b; }
-        .mode-sort { background: #ffb74d; color: #e65100; }
-        #question-area { background: #fff; border-radius: 25px; padding: 20px; text-align: center; box-shadow: 0 8px 0 rgba(0,0,0,0.05); border: 4px solid #b3e5fc; display: flex; flex-direction: column; align-items: center; gap: 10px; }
-        .main-speaker { width: 80px; height: 80px; background: #03a9f4; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; color: white; cursor: pointer; box-shadow: 0 6px 0 #0288d1; transition: transform 0.1s; }
-        .main-speaker:active { transform: scale(0.95); box-shadow: 0 2px 0 #0288d1; }
-        .question-text { font-size: 1.2rem; color: #0277bd; min-height: 1.5em; }
-        #options-grid { display: grid; grid-template-columns: 1fr; gap: 15px; width: 100%; }
-        #options-grid.grid-mode { grid-template-columns: 1fr 1fr; }
-        .card { background: white; border-radius: 20px; padding: 10px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 5px 0 rgba(0,0,0,0.1); border: 3px solid #e1f5fe; transition: transform 0.1s; cursor: pointer; position: relative; }
-        .card:active { transform: translateY(3px); box-shadow: 0 2px 0 rgba(0,0,0,0.1); }
-        .card-speaker { width: 50px; height: 50px; background: #e0f7fa; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; color: #0288d1; flex-shrink: 0; border: 2px solid #b3e5fc; z-index: 2; }
-        .card-content { flex-grow: 1; text-align: center; font-size: 1.2rem; font-weight: bold; color: #444; padding: 0 10px; user-select: none; }
-        .correct { background-color: #c8e6c9 !important; border-color: #4caf50 !important; }
-        .wrong { background-color: #ffcdd2 !important; border-color: #ef5350 !important; animation: shake 0.4s; }
-        @keyframes shake { 0%{transform:translateX(0)} 25%{transform:translateX(-5px)} 50%{transform:translateX(5px)} 75%{transform:translateX(-5px)} 100%{transform:translateX(0)} }
-        #feedback-msg { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); color: white; padding: 10px 20px; border-radius: 30px; font-size: 1.2rem; display: none; z-index: 100; }
-        .debug-panel { background: #fff3cd; border: 2px solid #ffc107; border-radius: 10px; padding: 10px; margin: 10px 0; font-size: 0.9rem; }
-        .debug-panel details { margin: 5px 0; }
+        #question-area {
+            background: var(--white);
+            border-radius: 25px;
+            padding: 30px;
+            text-align: center;
+            box-shadow: 0 8px 0 var(--shadow);
+            border: 4px solid var(--bg-blue);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .main-speaker {
+            width: 90px;
+            height: 90px;
+            background: var(--primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            color: white;
+            cursor: pointer;
+            box-shadow: 0 6px 0 #0288d1;
+            transition: transform 0.1s;
+        }
+
+        .main-speaker:active {
+            transform: scale(0.95);
+            box-shadow: 0 2px 0 #0288d1;
+        }
+
+        .question-text {
+            font-size: 1.4rem;
+            color: #0277bd;
+            font-weight: bold;
+        }
+
+        #options-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+            width: 100%;
+        }
+
+        #options-grid.grid-mode {
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .option-card {
+            background: var(--white);
+            border-radius: 20px;
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 5px 0 var(--shadow);
+            border: 3px solid #e1f5fe;
+            transition: transform 0.1s;
+            cursor: pointer;
+        }
+
+        .option-card:active {
+            transform: translateY(3px);
+            box-shadow: 0 2px 0 var(--shadow);
+        }
+
+        .option-speaker {
+            width: 45px;
+            height: 45px;
+            background: #e0f7fa;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: var(--primary);
+            flex-shrink: 0;
+        }
+
+        .option-content {
+            flex-grow: 1;
+            text-align: center;
+            font-size: 1.3rem;
+            font-weight: bold;
+        }
+
+        .correct {
+            background-color: #c8e6c9 !important;
+            border-color: #4caf50 !important;
+        }
+
+        .wrong {
+            background-color: #ffcdd2 !important;
+            border-color: #ef5350 !important;
+        }
+
+        .mode-btn {
+            flex: 1;
+        }
+
+        .mode-btn.active {
+            background: var(--primary);
+            color: white;
+            transform: scale(1.05);
+        }
+
+        .debug-panel {
+            margin-top: 10px;
+            font-size: 0.8rem;
+            background: #fffde7;
+            border-radius: 10px;
+            padding: 10px;
+            border: 1px solid #fff59d;
+        }
     </style>
 </head>
+
 <body>
 
     <div class="container">
         <div class="top-bar">
-            <a href="index.html" class="back-btn">🏠</a>
-            <div class="mode-switch">
-                <button class="mode-btn mode-qa active" onclick="switchMode('QA')">🗣️ 對話</button>
-                <button class="mode-btn mode-sort" onclick="switchMode('SORT')">🗂️ 分類</button>
+            <a href="index.html" class="nav-link" onclick="LukeCore.Audio.playClick()">🏠</a>
+            <div class="mode-switch" style="display: flex; gap: 10px; flex: 1; margin-left: 15px;">
+                <button class="btn btn-gray mode-btn active" id="btn-qa" onclick="switchMode('QA')">🗣️ 對話</button>
+                <button class="btn btn-gray mode-btn" id="btn-sort" onclick="switchMode('SORT')">🗂️ 分類</button>
             </div>
-        </div>
-
-        <!-- 偵錯面板 -->
-        <div class="debug-panel" id="debug-panel">
-            <details>
-                <summary><strong>🔍 載入狀態</strong></summary>
-                <div id="debug-info" style="margin-top: 10px; font-family: monospace; white-space: pre-wrap;"></div>
-            </details>
         </div>
 
         <div id="question-area">
@@ -58,14 +145,20 @@
         </div>
 
         <div id="options-grid"></div>
+
+        <div class="debug-panel">
+            <details>
+                <summary>🔍 系統狀態</summary>
+                <div id="debug-info" style="font-family: monospace; white-space: pre-wrap; margin-top: 5px;"></div>
+            </details>
+        </div>
     </div>
     <div id="feedback-msg">太棒了!</div>
 
     <script>
         let currentMode = 'QA';
-        let currentItem = null;
+        let currentItem = { q: "", a: "", theme: "" };
 
-        // 🔴 偵錯輔助函數
         function updateDebugInfo(msg) {
             const el = document.getElementById('debug-info');
             const timestamp = new Date().toLocaleTimeString();
@@ -73,137 +166,90 @@
             console.log(msg);
         }
 
-        // 🔴 改成 async function，可以使用 await
         async function init() {
             updateDebugInfo("🚀 開始初始化...");
             document.getElementById('q-text').innerText = "正在下載題庫...";
-            
+
             try {
-                // 檢查 GAME_DATA 是否存在
                 if (typeof GAME_DATA === 'undefined') {
                     updateDebugInfo("❌ 錯誤：data.js 沒有正確載入");
                     document.getElementById('q-text').innerText = "❌ data.js 載入失敗";
                     return;
                 }
-
                 updateDebugInfo("✅ GAME_DATA 已載入");
-
-                // 檢查是否有 loadFromCloud 函數
-                if (typeof GAME_DATA.loadFromCloud !== 'function') {
-                    updateDebugInfo("❌ 錯誤：loadFromCloud 函數不存在");
-                    document.getElementById('q-text').innerText = "❌ data.js 版本不正確";
-                    return;
-                }
-
-                updateDebugInfo("📡 開始從雲端下載資料...");
-
-                // 等待 data.js 去 Google 抓資料
                 await GAME_DATA.loadFromCloud();
-
                 updateDebugInfo(`📊 QA 題數: ${GAME_DATA.ENGLISH.QA_LIST.length}`);
                 updateDebugInfo(`📊 Sort 題數: ${GAME_DATA.ENGLISH.SORT_LIST.length}`);
-
-                // 檢查有沒有抓到資料
                 if (GAME_DATA.ENGLISH.QA_LIST.length === 0 && GAME_DATA.ENGLISH.SORT_LIST.length === 0) {
-                    updateDebugInfo("⚠️ 警告：沒有抓到任何題目");
-                    document.getElementById('q-text').innerText = "⚠️ 沒抓到題目\n請檢查：\n1. Google Sheet 是否已「發布到網路」\n2. 網址是否正確\n3. 是否透過網頁伺服器執行 (不能直接開啟檔案)";
+                    document.getElementById('q-text').innerText = "⚠️ 沒抓到題目";
                     return;
                 }
-
-                // 開始遊戲
-                updateDebugInfo("🎮 開始遊戲！");
                 switchMode('QA');
-
             } catch (error) {
                 updateDebugInfo(`❌ 初始化錯誤: ${error.message}`);
-                document.getElementById('q-text').innerText = `❌ 載入失敗: ${error.message}`;
             }
         }
 
         function switchMode(mode) {
             currentMode = mode;
-            document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
-            
+            document.getElementById('btn-qa').classList.toggle('active', mode === 'QA');
+            document.getElementById('btn-sort').classList.toggle('active', mode === 'SORT');
             if (mode === 'QA') {
-                document.querySelector('.mode-qa').classList.add('active');
                 document.getElementById('options-grid').classList.remove('grid-mode');
-                if (GAME_DATA.ENGLISH.QA_LIST.length === 0) {
-                    alert("QA 題庫是空的！");
-                    updateDebugInfo("⚠️ QA 題庫為空");
-                    return;
-                }
             } else {
-                document.querySelector('.mode-sort').classList.add('active');
                 document.getElementById('options-grid').classList.add('grid-mode');
-                if (GAME_DATA.ENGLISH.SORT_LIST.length === 0) {
-                    alert("分類題庫是空的！");
-                    updateDebugInfo("⚠️ Sort 題庫為空");
-                    return;
-                }
             }
             loadLevel();
         }
 
         function loadLevel() {
             const grid = document.getElementById('options-grid');
-            grid.innerHTML = ''; 
-            
+            grid.innerHTML = '';
             if (currentMode === 'QA') {
                 const list = GAME_DATA.ENGLISH.QA_LIST;
                 currentItem = list[Math.floor(Math.random() * list.length)];
                 document.getElementById('q-text').innerText = currentItem.q;
-                updateDebugInfo(`🎯 載入 QA 題目: ${currentItem.q}`);
-                
-                let options = [currentItem.a, ...currentItem.wrong];
-                options.sort(() => Math.random() - 0.5);
-
+                let options = [currentItem.a, ...currentItem.wrong].sort(() => Math.random() - 0.5);
                 options.forEach(opt => {
                     createCard(opt, (card) => {
                         if (opt === currentItem.a) {
                             card.classList.add('correct');
                             showFeedback("Correct! 答對了!");
-                            playAudio("Correct! " + opt);
+                            LukeCore.Audio.speak("Correct! " + opt);
+                            LukeCore.Stats.addStars(1);
                             setTimeout(loadLevel, 2000);
                         } else {
-                            card.classList.add('wrong');
-                            playAudio("Try again");
-                            setTimeout(() => card.classList.remove('wrong'), 500);
+                            card.classList.add('wrong', 'shake');
+                            LukeCore.Audio.speak("Try again");
+                            setTimeout(() => card.classList.remove('wrong', 'shake'), 500);
                         }
                     });
                 });
-                setTimeout(() => playAudio(currentItem.q), 500);
-
+                setTimeout(() => LukeCore.Audio.speak(currentItem.q), 500);
             } else {
                 const list = GAME_DATA.ENGLISH.SORT_LIST;
                 currentItem = list[Math.floor(Math.random() * list.length)];
-                const themeName = currentItem.theme.includes(':') ? currentItem.theme.split(':')[1] : currentItem.theme;
-                const cleanTheme = themeName.split('(')[0];
-
+                const cleanTheme = currentItem.theme.split(':')[1]?.split('(')[0] || currentItem.theme;
                 document.getElementById('q-text').innerText = "找出: " + currentItem.theme;
-                updateDebugInfo(`🎯 載入 Sort 題目: ${currentItem.theme}`);
-                
-                let allWords = [...currentItem.targets, ...currentItem.decoys];
-                allWords.sort(() => Math.random() - 0.5);
+                let allWords = [...currentItem.targets, ...currentItem.decoys].sort(() => Math.random() - 0.5);
                 currentItem.remaining = currentItem.targets.length;
-
-                setTimeout(() => playAudio("Find " + cleanTheme), 500);
-
+                setTimeout(() => LukeCore.Audio.speak("Find " + cleanTheme), 500);
                 allWords.forEach(word => {
                     createCard(word, (card) => {
-                        if(card.classList.contains('correct')) return;
-
+                        if (card.classList.contains('correct')) return;
                         if (currentItem.targets.includes(word)) {
                             card.classList.add('correct');
-                            playAudio(word);
+                            LukeCore.Audio.speak(word);
                             currentItem.remaining--;
-                            if(currentItem.remaining === 0) {
+                            if (currentItem.remaining === 0) {
                                 showFeedback("Good Job! 全找到了!");
+                                LukeCore.Stats.addStars(2);
                                 setTimeout(loadLevel, 2000);
                             }
                         } else {
-                            card.classList.add('wrong');
-                            playAudio("Oh no");
-                            setTimeout(() => card.classList.remove('wrong'), 500);
+                            card.classList.add('wrong', 'shake');
+                            LukeCore.Audio.speak("Oh no");
+                            setTimeout(() => card.classList.remove('wrong', 'shake'), 500);
                         }
                     });
                 });
@@ -213,53 +259,26 @@
         function createCard(text, onClick) {
             const grid = document.getElementById('options-grid');
             const card = document.createElement('div');
-            card.className = 'card';
-            
+            card.className = 'option-card';
             const speaker = document.createElement('div');
-            speaker.className = 'card-speaker';
+            speaker.className = 'option-speaker';
             speaker.innerText = '🔊';
-            speaker.onclick = (e) => {
-                e.stopPropagation();
-                playAudio(text);
-                speaker.style.transform = "scale(1.2)";
-                setTimeout(() => speaker.style.transform = "scale(1)", 200);
-            };
-
+            speaker.onclick = (e) => { e.stopPropagation(); LukeCore.Audio.speak(text); };
             const content = document.createElement('div');
-            content.className = 'card-content';
+            content.className = 'option-content';
             content.innerText = text;
-
-            card.appendChild(speaker);
-            card.appendChild(content);
+            card.appendChild(speaker); card.appendChild(content);
             card.onclick = () => onClick(card);
             grid.appendChild(card);
         }
 
         function playQuestion() {
-            if(currentMode === 'QA') playAudio(currentItem.q);
-            else {
-                 const themeName = currentItem.theme.includes(':') ? currentItem.theme.split(':')[1] : currentItem.theme;
-                 playAudio("Find " + themeName.split('(')[0]);
-            }
+            if (currentMode === 'QA') LukeCore.Audio.speak(currentItem.q);
+            else LukeCore.Audio.speak("Find " + (currentItem.theme.split(':')[1] || currentItem.theme));
         }
 
-        function playAudio(text) {
-            window.speechSynthesis.cancel();
-            const u = new SpeechSynthesisUtterance(text);
-            u.lang = 'en-US';
-            u.rate = 0.9;
-            window.speechSynthesis.speak(u);
-        }
-
-        function showFeedback(msg) {
-            const el = document.getElementById('feedback-msg');
-            el.innerText = msg;
-            el.style.display = 'block';
-            setTimeout(() => el.style.display = 'none', 2000);
-        }
-
-        // 頁面載入時執行
         init();
     </script>
 </body>
+
 </html>
