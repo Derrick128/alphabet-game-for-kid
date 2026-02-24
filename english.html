@@ -4,126 +4,99 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>英文聽力互動</title>
+    <title>英文聽力 - 每日10題</title>
     <link rel="stylesheet" href="styles.css">
     <script src="core.js"></script>
     <script src="data.js"></script>
     <style>
-        #question-area {
-            background: var(--white);
-            border-radius: 25px;
-            padding: 30px;
-            text-align: center;
-            box-shadow: 0 8px 0 var(--shadow);
-            border: 4px solid var(--bg-blue);
+        body {
+            background-color: var(--bg-blue);
+            padding-top: 10px;
+        }
+
+        .container {
+            max-width: 950px;
+            height: 95vh;
             display: flex;
             flex-direction: column;
-            align-items: center;
-            gap: 15px;
         }
 
-        .main-speaker {
-            width: 90px;
-            height: 90px;
-            background: var(--primary);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 3rem;
-            color: white;
-            cursor: pointer;
-            box-shadow: 0 6px 0 #0288d1;
-            transition: transform 0.1s;
-        }
-
-        .main-speaker:active {
-            transform: scale(0.95);
-            box-shadow: 0 2px 0 #0288d1;
-        }
-
-        .question-text {
-            font-size: 1.4rem;
-            color: #0277bd;
-            font-weight: bold;
-        }
-
-        #options-grid {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 15px;
-            width: 100%;
-        }
-
-        #options-grid.grid-mode {
-            grid-template-columns: 1fr 1fr;
-        }
-
-        .option-card {
-            background: var(--white);
-            border-radius: 20px;
-            padding: 15px;
+        .eng-item {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            box-shadow: 0 5px 0 var(--shadow);
+            padding: 12px;
+            background: #fff;
+            border-radius: 15px;
             border: 3px solid #e1f5fe;
-            transition: transform 0.1s;
             cursor: pointer;
+            transition: 0.2s;
         }
 
-        .option-card:active {
-            transform: translateY(3px);
-            box-shadow: 0 2px 0 var(--shadow);
+        .eng-item.active {
+            border-color: var(--primary);
+            background: #f1faff;
         }
 
-        .option-speaker {
-            width: 45px;
-            height: 45px;
-            background: #e0f7fa;
+        .eng-item.graded.correct {
+            border-color: var(--accent);
+            background: #e8f5e9;
+        }
+
+        .eng-item.graded.wrong {
+            border-color: var(--danger);
+            background: #ffebee;
+        }
+
+        .audio-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--primary);
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.5rem;
-            color: var(--primary);
-            flex-shrink: 0;
-        }
-
-        .option-content {
-            flex-grow: 1;
-            text-align: center;
-            font-size: 1.3rem;
-            font-weight: bold;
-        }
-
-        .correct {
-            background-color: #c8e6c9 !important;
-            border-color: #4caf50 !important;
-        }
-
-        .wrong {
-            background-color: #ffcdd2 !important;
-            border-color: #ef5350 !important;
-        }
-
-        .mode-btn {
-            flex: 1;
-        }
-
-        .mode-btn.active {
-            background: var(--primary);
             color: white;
-            transform: scale(1.05);
+            font-size: 1.2rem;
+            cursor: pointer;
         }
 
-        .debug-panel {
-            margin-top: 10px;
-            font-size: 0.8rem;
-            background: #fffde7;
+        .ans-slot {
+            min-width: 80px;
+            height: 35px;
+            border: 2px dashed #90caf9;
             border-radius: 10px;
-            padding: 10px;
-            border: 1px solid #fff59d;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            background: #fff;
+        }
+
+        .options-panel {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            padding: 15px;
+            background: #f8fdff;
+            border-radius: 20px;
+            border: 3px solid #e1f5fe;
+        }
+
+        .opt-card {
+            background: white;
+            border-radius: 15px;
+            padding: 15px;
+            text-align: center;
+            border: 3px solid #eee;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1.1rem;
+            transition: 0.1s;
+        }
+
+        .opt-card:active {
+            transform: scale(0.95);
         }
     </style>
 </head>
@@ -132,149 +105,159 @@
 
     <div class="container">
         <div class="top-bar">
-            <a href="index.html" class="nav-link" onclick="LukeCore.Audio.playClick()">🏠</a>
-            <div class="mode-switch" style="display: flex; gap: 10px; flex: 1; margin-left: 15px;">
-                <button class="btn btn-gray mode-btn active" id="btn-qa" onclick="switchMode('QA')">🗣️ 對話</button>
-                <button class="btn btn-gray mode-btn" id="btn-sort" onclick="switchMode('SORT')">🗂️ 分類</button>
+            <a href="index.html" class="nav-link" onclick="playClick()">🏠 主選單</a>
+            <div id="session-progress" style="font-weight: bold;">進度: 0/10</div>
+            <div style="color: var(--primary); font-weight: bold;">每日英文聽力</div>
+        </div>
+
+        <div class="math-layout">
+            <!-- Left: Question List -->
+            <div class="question-list" id="question-list">
+                <div id="eng-grid" style="display:flex; flex-direction:column; gap:10px;"></div>
+                <button id="btn-submit-exam" class="btn btn-accent" style="display:none; margin-top:15px"
+                    onclick="submitSession()">📤 做完囉！交卷評分</button>
+            </div>
+
+            <!-- Right: Interactive area -->
+            <div class="canvas-section">
+                <div class="canvas-info" id="current-focus-text">請點擊左側喇叭聽題目</div>
+                <div id="interaction-box"
+                    style="flex:1; display:flex; flex-direction:column; justify-content:center; gap:20px;">
+                    <div id="big-play-btn"
+                        style="width:120px; height:120px; background:var(--primary); border-radius:50%; margin:0 auto; display:none; align-items:center; justify-content:center; font-size:4rem; color:white; cursor:pointer;"
+                        onclick="playFocused()">🔊</div>
+                    <div id="options-panel" class="options-panel" style="display:none;"></div>
+                </div>
             </div>
         </div>
-
-        <div id="question-area">
-            <div class="main-speaker" onclick="playQuestion()">🔊</div>
-            <div class="question-text" id="q-text">準備中...</div>
-        </div>
-
-        <div id="options-grid"></div>
-
-        <div class="debug-panel">
-            <details>
-                <summary>🔍 系統狀態</summary>
-                <div id="debug-info" style="font-family: monospace; white-space: pre-wrap; margin-top: 5px;"></div>
-            </details>
-        </div>
     </div>
-    <div id="feedback-msg">太棒了!</div>
 
     <script>
-        let currentMode = 'QA';
-        let currentItem = { q: "", a: "", theme: "" };
-
-        function updateDebugInfo(msg) {
-            const el = document.getElementById('debug-info');
-            const timestamp = new Date().toLocaleTimeString();
-            el.textContent += `[${timestamp}] ${msg}\n`;
-            console.log(msg);
-        }
+        const TOTAL = 10;
+        let sessionData = [];
+        let currentIndex = -1;
+        let isGraded = false;
 
         async function init() {
-            updateDebugInfo("🚀 開始初始化...");
-            document.getElementById('q-text').innerText = "正在下載題庫...";
-
-            try {
-                if (typeof GAME_DATA === 'undefined') {
-                    updateDebugInfo("❌ 錯誤：data.js 沒有正確載入");
-                    document.getElementById('q-text').innerText = "❌ data.js 載入失敗";
-                    return;
-                }
-                updateDebugInfo("✅ GAME_DATA 已載入");
-                await GAME_DATA.loadFromCloud();
-                updateDebugInfo(`📊 QA 題數: ${GAME_DATA.ENGLISH.QA_LIST.length}`);
-                updateDebugInfo(`📊 Sort 題數: ${GAME_DATA.ENGLISH.SORT_LIST.length}`);
-                if (GAME_DATA.ENGLISH.QA_LIST.length === 0 && GAME_DATA.ENGLISH.SORT_LIST.length === 0) {
-                    document.getElementById('q-text').innerText = "⚠️ 沒抓到題目";
-                    return;
-                }
-                switchMode('QA');
-            } catch (error) {
-                updateDebugInfo(`❌ 初始化錯誤: ${error.message}`);
-            }
+            LukeCore.Timer.start();
+            await GAME_DATA.loadFromCloud();
+            setupSession();
+            renderList();
         }
 
-        function switchMode(mode) {
-            currentMode = mode;
-            document.getElementById('btn-qa').classList.toggle('active', mode === 'QA');
-            document.getElementById('btn-sort').classList.toggle('active', mode === 'SORT');
-            if (mode === 'QA') {
-                document.getElementById('options-grid').classList.remove('grid-mode');
-            } else {
-                document.getElementById('options-grid').classList.add('grid-mode');
-            }
-            loadLevel();
+        function setupSession() {
+            const list = GAME_DATA.ENGLISH.QA_LIST;
+            // Pick 10 random
+            const shuffled = [...list].sort(() => Math.random() - 0.5);
+            sessionData = shuffled.slice(0, TOTAL).map(item => ({
+                q: item.q,
+                a: item.a,
+                options: [item.a, ...item.wrong].sort(() => Math.random() - 0.5),
+                userAns: null,
+                result: null
+            }));
         }
 
-        function loadLevel() {
-            const grid = document.getElementById('options-grid');
+        function renderList() {
+            const grid = document.getElementById('eng-grid');
             grid.innerHTML = '';
-            if (currentMode === 'QA') {
-                const list = GAME_DATA.ENGLISH.QA_LIST;
-                currentItem = list[Math.floor(Math.random() * list.length)];
-                document.getElementById('q-text').innerText = currentItem.q;
-                let options = [currentItem.a, ...currentItem.wrong].sort(() => Math.random() - 0.5);
-                options.forEach(opt => {
-                    createCard(opt, (card) => {
-                        if (opt === currentItem.a) {
-                            card.classList.add('correct');
-                            showFeedback("Correct! 答對了!");
-                            LukeCore.Audio.speak("Correct! " + opt);
-                            LukeCore.Stats.addStars(1);
-                            setTimeout(loadLevel, 2000);
-                        } else {
-                            card.classList.add('wrong', 'shake');
-                            LukeCore.Audio.speak("Try again");
-                            setTimeout(() => card.classList.remove('wrong', 'shake'), 500);
-                        }
-                    });
-                });
-                setTimeout(() => LukeCore.Audio.speak(currentItem.q), 500);
+            let completedCount = 0;
+
+            sessionData.forEach((item, i) => {
+                if (item.userAns) completedCount++;
+                const el = document.createElement('div');
+                el.className = `eng-item ${currentIndex === i ? 'active' : ''}`;
+                if (item.result) el.classList.add('graded', item.result);
+
+                el.innerHTML = `
+                    <div class="audio-btn" onclick="event.stopPropagation(); playVoice('${item.q}')">🔊</div>
+                    <div class="ans-slot">${item.userAns || ''}</div>
+                `;
+                el.onclick = () => selectItem(i);
+                grid.appendChild(el);
+            });
+
+            document.getElementById('session-progress').innerText = `進度: ${completedCount}/10`;
+            document.getElementById('btn-submit-exam').style.display = (completedCount === TOTAL && !isGraded) ? 'block' : 'none';
+        }
+
+        function selectItem(idx) {
+            currentIndex = idx;
+            document.getElementById('current-focus-text').innerText = `正在聽第 ${idx + 1} 題`;
+            document.getElementById('big-play-btn').style.display = 'flex';
+
+            const panel = document.getElementById('options-panel');
+            panel.innerHTML = '';
+            panel.style.display = 'grid';
+
+            sessionData[idx].options.forEach(opt => {
+                const card = document.createElement('div');
+                card.className = 'opt-card';
+                card.innerText = opt;
+                card.onclick = () => chooseAnswer(opt);
+                panel.appendChild(card);
+            });
+
+            renderList();
+            playFocused();
+        }
+
+        function playFocused() {
+            if (currentIndex !== -1) playVoice(sessionData[currentIndex].q);
+        }
+
+        function playVoice(txt) {
+            LukeCore.Audio.speak(txt);
+        }
+
+        function chooseAnswer(ans) {
+            if (currentIndex === -1) return;
+            sessionData[currentIndex].userAns = ans;
+            playClick();
+
+            // Feedback
+            if (currentIndex < TOTAL - 1) {
+                selectItem(currentIndex + 1);
             } else {
-                const list = GAME_DATA.ENGLISH.SORT_LIST;
-                currentItem = list[Math.floor(Math.random() * list.length)];
-                const cleanTheme = currentItem.theme.split(':')[1]?.split('(')[0] || currentItem.theme;
-                document.getElementById('q-text').innerText = "找出: " + currentItem.theme;
-                let allWords = [...currentItem.targets, ...currentItem.decoys].sort(() => Math.random() - 0.5);
-                currentItem.remaining = currentItem.targets.length;
-                setTimeout(() => LukeCore.Audio.speak("Find " + cleanTheme), 500);
-                allWords.forEach(word => {
-                    createCard(word, (card) => {
-                        if (card.classList.contains('correct')) return;
-                        if (currentItem.targets.includes(word)) {
-                            card.classList.add('correct');
-                            LukeCore.Audio.speak(word);
-                            currentItem.remaining--;
-                            if (currentItem.remaining === 0) {
-                                showFeedback("Good Job! 全找到了!");
-                                LukeCore.Stats.addStars(2);
-                                setTimeout(loadLevel, 2000);
-                            }
-                        } else {
-                            card.classList.add('wrong', 'shake');
-                            LukeCore.Audio.speak("Oh no");
-                            setTimeout(() => card.classList.remove('wrong', 'shake'), 500);
-                        }
-                    });
-                });
+                renderList();
             }
         }
 
-        function createCard(text, onClick) {
-            const grid = document.getElementById('options-grid');
-            const card = document.createElement('div');
-            card.className = 'option-card';
-            const speaker = document.createElement('div');
-            speaker.className = 'option-speaker';
-            speaker.innerText = '🔊';
-            speaker.onclick = (e) => { e.stopPropagation(); LukeCore.Audio.speak(text); };
-            const content = document.createElement('div');
-            content.className = 'option-content';
-            content.innerText = text;
-            card.appendChild(speaker); card.appendChild(content);
-            card.onclick = () => onClick(card);
-            grid.appendChild(card);
-        }
+        function submitSession() {
+            isGraded = true;
+            let correctCount = 0;
+            sessionData.forEach(item => {
+                if (item.userAns === item.a) {
+                    item.result = 'correct';
+                    correctCount++;
+                } else {
+                    item.result = 'wrong';
+                }
+            });
 
-        function playQuestion() {
-            if (currentMode === 'QA') LukeCore.Audio.speak(currentItem.q);
-            else LukeCore.Audio.speak("Find " + (currentItem.theme.split(':')[1] || currentItem.theme));
+            const duration = LukeCore.Timer.stop();
+            LukeCore.Daily.markComplete('english', duration);
+
+            LukeCore.Audio.playSuccess();
+            alert(`聽力練習結束！\n答對題數：${correctCount} / 10\n用時：${Math.floor(duration / 60)}分${duration % 60}秒\n獲得星星：${correctCount * 3}`);
+            LukeCore.Stats.addStars(correctCount * 3);
+
+            renderList();
+
+            // Correction Logic
+            const multiBtn = document.getElementById('btn-submit-exam');
+            multiBtn.style.display = 'block';
+            multiBtn.innerText = "重新練習錯題";
+            multiBtn.className = "btn btn-secondary";
+            multiBtn.onclick = () => {
+                const firstWrong = sessionData.findIndex(s => s.result === 'wrong');
+                if (firstWrong !== -1) {
+                    selectItem(firstWrong);
+                } else {
+                    alert("全部都對囉！太棒了！");
+                    location.href = 'index.html';
+                }
+            };
         }
 
         init();
