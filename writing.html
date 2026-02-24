@@ -4,192 +4,287 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>練字小教室</title>
-
+    <title>練字大挑戰 - 每日任務</title>
     <link rel="stylesheet" href="styles.css">
+    <script src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'></script>
     <script src="core.js"></script>
     <script src="data.js"></script>
-
     <style>
         body {
             background-color: var(--bg-green);
-            overflow: hidden;
+            padding-top: 10px;
         }
 
-        .hidden {
-            display: none !important;
-        }
-
-        #selection-view {
-            width: 100%;
-            height: calc(100vh - 80px);
-            overflow-y: auto;
-            padding: 20px;
-            box-sizing: border-box;
-        }
-
-        .grid-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
-            gap: 15px;
-            padding-bottom: 40px;
-        }
-
-        .char-card {
-            background: white;
-            border-radius: 20px;
-            aspect-ratio: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 2.5rem;
-            color: #444;
-            box-shadow: 0 4px 0 var(--shadow);
-            border: 3px solid transparent;
-            cursor: pointer;
-            transition: transform 0.1s;
-        }
-
-        .char-card:active {
-            transform: translateY(3px);
-            box-shadow: none;
-        }
-
-        .grid-en .char-card {
-            border-color: #b3e5fc;
-            color: #0277bd;
-            font-family: 'Arial', sans-serif;
-        }
-
-        .grid-zh .char-card {
-            border-color: #f8bbd0;
-            color: #c2185b;
-            font-size: 2rem;
-        }
-
-        #practice-view {
+        .container {
+            max-width: 950px;
+            height: 95vh;
             display: flex;
             flex-direction: column;
-            align-items: center;
-            width: 100%;
         }
 
-        #canvas-container {
-            position: relative;
-            width: 300px;
-            height: 300px;
-            margin: 10px auto;
-            border: 6px dashed var(--accent);
-            border-radius: 25px;
-            background-color: white;
-            box-shadow: 0 8px 20px var(--shadow);
-        }
-
-        canvas {
-            position: absolute;
-            top: 0;
-            left: 0;
+        #canvas-wrapper {
+            flex: 1;
+            background: #fff;
+            border: 5px solid #a5d6a7;
             border-radius: 20px;
-            touch-action: none;
-        }
-
-        #bg-layer {
-            z-index: 1;
-        }
-
-        #draw-layer {
-            z-index: 2;
+            position: relative;
             cursor: crosshair;
         }
 
-        #result-display {
-            margin-top: 5px;
-            font-size: 1.5rem;
-            font-weight: bold;
-            height: 40px;
-            text-align: center;
+        canvas {
+            width: 100%;
+            height: 100%;
+            touch-action: none;
+            border-radius: 15px;
         }
 
-        .controls {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
+        .grading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            display: none;
+            flex-direction: column;
+            align-items: center;
             justify-content: center;
-            width: 95%;
-            max-width: 400px;
-            margin-top: 10px;
+            z-index: 3000;
+        }
+
+        .cloze-hint {
+            font-size: 1.5rem;
+            color: var(--text-light);
+        }
+
+        .cloze-target {
+            font-size: 2.5rem;
+            color: var(--accent);
+            font-weight: bold;
         }
     </style>
 </head>
 
 <body>
-    <div class="top-bar">
-        <a id="btn-home" class="nav-link" href="index.html" onclick="playClick()">🏠</a>
-        <button id="btn-back" class="nav-link hidden" style="background:none; border:none;"
-            onclick="goBackToGrid()">↩️</button>
-        <h2 id="page-title" class="page-title">練字小教室</h2>
-        <div style="width: 30px;"></div>
-    </div>
-    <div id="selection-view">
-        <div id="grid-container" class="grid-container"></div>
-    </div>
-    <div id="practice-view" class="hidden">
-        <div id="canvas-container"><canvas id="bg-layer" width="300" height="300"></canvas><canvas id="draw-layer"
-                width="300" height="300"></canvas></div>
-        <div id="result-display"></div>
-        <div class="controls"><button class="btn btn-gray" style="flex:0.6" onclick="changeLetter(-1)">◀</button><button
-                class="btn btn-secondary" id="case-btn" onclick="toggleCase()">Aa</button><button class="btn btn-gray"
-                style="flex:0.6" onclick="changeLetter(1)">▶</button></div>
-        <div class="controls"><button class="btn btn-danger" style="flex:1" onclick="clearCanvas()">重寫</button><button
-                class="btn btn-accent" style="flex:1.5; font-size:1.3rem" onclick="calculateScore()">💯 評分</button>
+
+    <div class="container">
+        <div class="top-bar">
+            <a href="index.html" class="nav-link" onclick="playClick()">🏠 主選單</a>
+            <div id="exam-progress" style="font-weight: bold;">進度: 0/15</div>
+            <div id="page-title" style="color: var(--accent); font-weight: bold;">每日練字</div>
+        </div>
+
+        <div class="math-layout">
+            <!-- Left: Question List -->
+            <div class="question-list" id="question-list">
+                <div id="questions-grid" style="display:flex; flex-direction:column; gap:10px;"></div>
+                <button id="btn-submit-exam" class="btn btn-accent" style="display:none; margin-top:15px"
+                    onclick="submitExam()">📤 寫完囉！交卷評分</button>
+            </div>
+
+            <!-- Right: Canvas -->
+            <div class="canvas-section">
+                <div class="canvas-info" id="current-focus-text">請由左方選擇一個空格</div>
+                <div id="hint-area" style="text-align:center; padding:10px;">
+                    <span class="cloze-hint" id="cloze-prefix">練習寫</span>
+                    <span class="cloze-target" id="cloze-char">?</span>
+                </div>
+                <div id="canvas-wrapper">
+                    <canvas id="writeCanvas"></canvas>
+                </div>
+                <div class="btn-group" style="display: flex; gap: 10px;">
+                    <button class="btn btn-gray" onclick="clearCanvas()">重寫</button>
+                    <button class="btn btn-primary" id="btn-confirm" onclick="confirmAnswer()" disabled>確認填入 ✅</button>
+                </div>
+            </div>
         </div>
     </div>
+
+    <!-- AI Grading Modal -->
+    <div id="grading-modal" class="grading-overlay">
+        <h2>AI 正在努力閱卷中...</h2>
+        <div id="grad-progress">0%</div>
+        <div class="spinner" style="width:40px; height:40px; border-width:5px; border-top-color:var(--accent);"></div>
+    </div>
+
     <script>
-        const urlParams = new URLSearchParams(window.location.search);
-        const mode = urlParams.get('type') || 'EN';
-        let letters = [], currentIndex = 0, isUpper = true, isDrawing = false;
-        const canvasSize = 300;
-        const bgCanvas = document.getElementById('bg-layer'), bgCtx = bgCanvas.getContext('2d');
-        const drawCanvas = document.getElementById('draw-layer'), drawCtx = drawCanvas.getContext('2d');
-        const resultDisplay = document.getElementById('result-display');
+        const params = new URLSearchParams(window.location.search);
+        const writingType = params.get('type') === 'ZH' ? 'ZH' : 'EN';
+        const taskId = writingType === 'ZH' ? 'write-zh' : 'write-en';
+
+        const TOTAL = 15;
+        let sessionData = [];
+        let currentIndex = -1;
+
+        const canvas = document.getElementById('writeCanvas');
+        const ctx = canvas.getContext('2d');
+        let isDrawing = false;
+        let worker = null;
+
         function init() {
-            if (mode === 'ZH') { letters = GAME_DATA.WRITING.ZH; document.getElementById('page-title').innerText = "注音符號表"; document.getElementById('case-btn').classList.add('hidden'); document.getElementById('grid-container').className = "grid-container grid-zh"; }
-            else { letters = GAME_DATA.WRITING.EN; document.getElementById('page-title').innerText = "English ABC"; document.getElementById('grid-container').className = "grid-container grid-en"; }
-            renderGrid(); setupCanvas();
+            LukeCore.Timer.start();
+            document.getElementById('page-title').innerText = writingType === 'ZH' ? "每日注音符號" : "每日英文練字";
+            document.body.style.backgroundColor = writingType === 'ZH' ? "#fce4ec" : "var(--bg-green)";
+
+            setupSession();
+            renderList();
+            resizeCanvas();
+            setupCanvas();
+            window.onresize = resizeCanvas;
         }
-        function renderGrid() {
-            const container = document.getElementById('grid-container'); container.innerHTML = '';
-            letters.forEach((char, index) => { const btn = document.createElement('div'); btn.className = 'char-card'; btn.innerText = char; btn.onclick = () => startPractice(index); container.appendChild(btn); });
+
+        function setupSession() {
+            const list = GAME_DATA.WRITING[writingType];
+            const shuffled = [...list].sort(() => Math.random() - 0.5);
+            sessionData = shuffled.slice(0, TOTAL).map(char => ({
+                target: char,
+                imgData: null,
+                result: null
+            }));
         }
-        function startPractice(index) { playClick(); currentIndex = index; isUpper = true; document.getElementById('selection-view').classList.add('hidden'); document.getElementById('practice-view').classList.remove('hidden'); document.getElementById('btn-home').classList.add('hidden'); document.getElementById('btn-back').classList.remove('hidden'); clearCanvas(); renderTemplate(); }
-        function goBackToGrid() { playClick(); document.getElementById('practice-view').classList.add('hidden'); document.getElementById('selection-view').classList.remove('hidden'); document.getElementById('btn-back').classList.add('hidden'); document.getElementById('btn-home').classList.remove('hidden'); document.getElementById('page-title').innerText = (mode === 'ZH') ? "注音符號表" : "English ABC"; }
+
+        function renderList() {
+            const grid = document.getElementById('questions-grid');
+            grid.innerHTML = '';
+            let filled = 0;
+
+            sessionData.forEach((item, i) => {
+                if (item.imgData) filled++;
+                const el = document.createElement('div');
+                el.className = `math-item ${currentIndex === i ? 'active' : ''}`;
+                if (item.result) el.classList.add('graded', item.result);
+
+                el.innerHTML = `
+                    <span>${i + 1}. ${item.target}</span>
+                    <div class="slot-box">
+                        ${item.imgData ? `<img src="${item.imgData}" class="slot-thumbnail">` : ''}
+                    </div>
+                `;
+                el.onclick = () => selectItem(i);
+                grid.appendChild(el);
+            });
+
+            document.getElementById('exam-progress').innerText = `進度: ${filled}/${TOTAL}`;
+            document.getElementById('btn-submit-exam').style.display = (filled === TOTAL) ? 'block' : 'none';
+        }
+
+        function selectItem(idx) {
+            currentIndex = idx;
+            document.getElementById('cloze-char').innerText = sessionData[idx].target;
+            document.getElementById('current-focus-text').innerText = `正在寫第 ${idx + 1} 題`;
+            document.getElementById('btn-confirm').disabled = false;
+
+            clearCanvas();
+            renderList();
+            playClick();
+        }
+
+        function confirmAnswer() {
+            if (currentIndex === -1) return;
+            sessionData[currentIndex].imgData = getCanvasWithWhiteBackground();
+            playClick();
+
+            if (currentIndex < TOTAL - 1) {
+                selectItem(currentIndex + 1);
+            } else {
+                renderList();
+            }
+        }
+
+        async function submitExam() {
+            if (!confirm("確定要交卷評分嗎？")) return;
+
+            document.getElementById('grading-modal').style.display = 'flex';
+
+            if (!worker) {
+                const lang = writingType === 'EN' ? 'eng' : 'chi_tra';
+                worker = await Tesseract.createWorker(lang, 1, {
+                    langPath: 'https://tessdata.projectnaptha.com/4.0.0'
+                });
+                if (writingType === 'EN') {
+                    await worker.setParameters({ tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz', tessedit_pageseg_mode: '10' });
+                }
+            }
+
+            let correctCount = 0;
+            for (let i = 0; i < sessionData.length; i++) {
+                const q = sessionData[i];
+                document.getElementById('grad-progress').innerText = `${Math.round((i / TOTAL) * 100)}%`;
+
+                try {
+                    const { data: { text } } = await worker.recognize(q.imgData);
+                    const recognized = text.trim();
+                    // Basic check: includes the target character?
+                    if (recognized.toLowerCase().includes(q.target.toLowerCase())) {
+                        q.result = 'correct';
+                        correctCount++;
+                    } else {
+                        q.result = 'wrong';
+                    }
+                } catch (e) {
+                    q.result = 'wrong';
+                }
+            }
+
+            document.getElementById('grading-modal').style.display = 'none';
+            const duration = LukeCore.Timer.stop();
+            LukeCore.Daily.markComplete(taskId, duration);
+
+            alert(`練字結束！\n答對題數：${correctCount} / ${TOTAL}\n用時：${Math.floor(duration / 60)}分${duration % 60}秒\n獲得星星：${correctCount * 1}`);
+            LukeCore.Stats.addStars(correctCount * 1);
+
+            renderList();
+
+            const btn = document.getElementById('btn-submit-exam');
+            btn.innerText = "修正錯誤內容";
+            btn.className = "btn btn-secondary";
+            btn.onclick = () => {
+                const firstWrong = sessionData.findIndex(s => s.result === 'wrong');
+                if (firstWrong !== -1) {
+                    selectItem(firstWrong);
+                } else {
+                    alert("漂亮！全部都寫對囉！");
+                    location.href = 'index.html';
+                }
+            };
+        }
+
+        // --- Canvas Logic ---
+        function getCanvasWithWhiteBackground() {
+            const w = canvas.width, h = canvas.height;
+            const t = document.createElement('canvas'); t.width = w; t.height = h;
+            const c = t.getContext('2d');
+            c.fillStyle = '#ffffff';
+            c.fillRect(0, 0, w, h);
+            c.drawImage(canvas, 0, 0);
+            return t.toDataURL('image/png', 0.5);
+        }
+        function resizeCanvas() {
+            const rect = canvas.parentElement.getBoundingClientRect();
+            canvas.width = rect.width; canvas.height = rect.height;
+            setupCtx();
+        }
+        function setupCtx() { ctx.lineWidth = 12; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.strokeStyle = '#333'; }
         function setupCanvas() {
-            drawCtx.lineCap = 'round'; drawCtx.lineJoin = 'round'; drawCtx.lineWidth = 13; drawCtx.strokeStyle = '#333';
-            const start = (e) => { e.preventDefault(); isDrawing = true; drawCtx.beginPath(); const p = getPos(e); drawCtx.moveTo(p.x, p.y); playClick(); };
-            const move = (e) => { if (!isDrawing) return; e.preventDefault(); const p = getPos(e); drawCtx.lineTo(p.x, p.y); drawCtx.stroke(); };
-            const end = () => isDrawing = false;
-            drawCanvas.addEventListener('mousedown', start); drawCanvas.addEventListener('mousemove', move); drawCanvas.addEventListener('mouseup', end);
-            drawCanvas.addEventListener('touchstart', start, { passive: false }); drawCanvas.addEventListener('touchmove', move, { passive: false }); drawCanvas.addEventListener('touchend', end);
+            const getPos = (e) => {
+                const rect = canvas.getBoundingClientRect();
+                const x = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
+                const y = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
+                return { x, y };
+            };
+            const start = (e) => { e.preventDefault(); isDrawing = true; ctx.beginPath(); const p = getPos(e); ctx.moveTo(p.x, p.y); };
+            const move = (e) => { if (!isDrawing) return; e.preventDefault(); const p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); };
+            const stop = () => isDrawing = false;
+            canvas.addEventListener('mousedown', start);
+            canvas.addEventListener('mousemove', move);
+            window.addEventListener('mouseup', stop);
+            canvas.addEventListener('touchstart', start, { passive: false });
+            canvas.addEventListener('touchmove', move, { passive: false });
+            canvas.addEventListener('touchend', stop);
         }
-        function renderTemplate() {
-            bgCtx.clearRect(0, 0, canvasSize, canvasSize); let char = letters[currentIndex]; if (mode === 'EN' && !isUpper) char = char.toLowerCase();
-            document.getElementById('page-title').innerText = `練習: ${char}`;
-            bgCtx.strokeStyle = '#e1f5fe'; bgCtx.lineWidth = 2; bgCtx.beginPath(); bgCtx.moveTo(0, canvasSize / 2); bgCtx.lineTo(canvasSize, canvasSize / 2); bgCtx.moveTo(canvasSize / 2, 0); bgCtx.lineTo(canvasSize / 2, canvasSize); bgCtx.stroke();
-            bgCtx.font = "200px Arial"; if (mode === 'ZH') bgCtx.font = "180px Microsoft JhengHei"; bgCtx.textAlign = "center"; bgCtx.textBaseline = "middle"; bgCtx.fillStyle = "#cfd8dc"; bgCtx.fillText(char, canvasSize / 2, canvasSize / 2 + 15);
-        }
-        function getPos(e) { const rect = drawCanvas.getBoundingClientRect(); const cx = e.touches ? e.touches[0].clientX : e.clientX, cy = e.touches ? e.touches[0].clientY : e.clientY; return { x: cx - rect.left, y: cy - rect.top }; }
-        function calculateScore() {
-            const bgData = bgCtx.getImageData(0, 0, canvasSize, canvasSize).data, drawData = drawCtx.getImageData(0, 0, canvasSize, canvasSize).data;
-            let tp = 0, hp = 0, op = 0; for (let i = 0; i < bgData.length; i += 4) { const ht = bgData[i + 3] > 0, hd = drawData[i + 3] > 0; if (ht) { tp++; if (hd) hp++; } else { if (hd) op++; } }
-            if (tp === 0) return; if (hp === 0) { resultDisplay.innerText = "請先寫字喔！"; resultDisplay.style.color = "#555"; return; }
-            let s = Math.round((hp / tp) * 125 - (op / tp) * 10); if (s > 100) s = 100; if (s < 0) s = 0;
-            if (s >= 90) { resultDisplay.innerText = "🌟 完美！獲得 10 星"; resultDisplay.style.color = "var(--accent)"; playSuccess(); LukeCore.Stats.addStars(10); }
-            else if (s >= 70) { resultDisplay.innerText = "😊 很棒！獲得 5 星"; resultDisplay.style.color = "var(--secondary)"; playSuccess(); LukeCore.Stats.addStars(5); }
-            else { resultDisplay.innerText = "🤔 加油！再試一次"; resultDisplay.style.color = "var(--danger)"; playClick(); }
-        }
-        function clearCanvas() { drawCtx.clearRect(0, 0, canvasSize, canvasSize); resultDisplay.innerText = ""; playClick(); }
-        function changeLetter(dir) { currentIndex = (currentIndex + dir + letters.length) % letters.length; clearCanvas(); renderTemplate(); playClick(); }
-        function toggleCase() { isUpper = !isUpper; clearCanvas(); renderTemplate(); playClick(); }
+        function clearCanvas() { ctx.clearRect(0, 0, canvas.width, canvas.height); }
+
         init();
     </script>
 </body>
