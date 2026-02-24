@@ -216,8 +216,19 @@
 
         function selectItem(idx) {
             currentIndex = idx;
-            document.getElementById('cloze-char').innerText = sessionData[idx].target;
-            document.getElementById('current-focus-text').innerText = `正在寫第 ${sessionData[idx].displayIndex} 題`;
+            const item = sessionData[idx];
+
+            // If it's a blank and we haven't graded yet, hide the answer
+            if (item.isBlank && !item.result) {
+                document.getElementById('cloze-char').innerText = "?";
+                document.getElementById('cloze-prefix').innerText = "這格該填什麼呢？";
+            } else {
+                // Show answer if it's graded (for correction)
+                document.getElementById('cloze-char').innerText = item.target;
+                document.getElementById('cloze-prefix').innerText = "練習寫";
+            }
+
+            document.getElementById('current-focus-text').innerText = `正在寫第 ${item.displayIndex} 題`;
             document.getElementById('btn-confirm').disabled = false;
 
             clearCanvas();
