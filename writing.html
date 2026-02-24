@@ -189,7 +189,6 @@
                     el.style.padding = '5px';
 
                     el.innerHTML = `
-                        <span style="font-size:0.8rem; color:#999">${item.displayIndex}</span>
                         <div class="slot-box" style="width:50px; height:50px; margin:0 auto">
                             ${item.imgData ? `<img src="${item.imgData}" class="slot-thumbnail">` : '?'}
                         </div>
@@ -228,7 +227,7 @@
                 document.getElementById('cloze-prefix').innerText = "練習寫";
             }
 
-            document.getElementById('current-focus-text').innerText = `正在寫第 ${item.displayIndex} 題`;
+            document.getElementById('current-focus-text').innerText = `正在練習：${item.isBlank ? '這格該填什麼？' : item.target}`;
             document.getElementById('btn-confirm').disabled = false;
 
             clearCanvas();
@@ -271,7 +270,14 @@
                     langPath: 'https://tessdata.projectnaptha.com/4.0.0'
                 });
                 if (writingType === 'EN') {
-                    await worker.setParameters({ tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz', tessedit_pageseg_mode: '10' });
+                    await worker.setParameters({
+                        tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz',
+                        tessedit_pageseg_mode: '10' // Single character
+                    });
+                } else {
+                    await worker.setParameters({
+                        tessedit_pageseg_mode: '10' // Single character
+                    });
                 }
             }
 
@@ -322,11 +328,30 @@
         // --- Canvas Logic ---
         function getCanvasWithWhiteBackground() {
             const w = canvas.width, h = canvas.height;
-            const t = document.createElement('canvas'); t.width = w; t.height = h;
+            // Add padding to help Tesseract
+            const padding = 20;
+            const t = document.createElement('canvas');
+            t.width = w + padding * 2;
+            t.height = h + padding * 2;
             const c = t.getContext('2d');
+
+            // Fill white
             c.fillStyle = '#ffffff';
-            c.fillRect(0, 0, w, h);
-            c.drawImage(canvas, 0, 0);
+            c.fillRect(0, 0, t.width, t.height);
+
+            // Draw original with padding
+            c.drawImage(canvas, padding, padding);
+
+            // Image Processing: Thresholding (High Contrast)
+            const imgData = c.getImageData(0, 0, t.width, t.height);
+            const data = imgData.data;
+            for (let i = 0; i < data.length; i += 4) {
+                const brightness = (data[i] + data[i + 1] + data[i + 2]) / 3;
+                const v = brightness > 180 ? 255 : 0;
+                data[i] = data[i + 1] = data[i + 2] = v;
+            }
+            c.putImageData(imgData, 0, 0);
+
             return t.toDataURL('image/png', 0.5);
         }
         function resizeCanvas() {
