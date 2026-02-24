@@ -105,6 +105,51 @@ const LukeCore = {
         }
     },
 
+    // --- 🕒 Timer Management ---
+    Timer: {
+        startTime: 0,
+        start() {
+            this.startTime = Date.now();
+        },
+        stop() {
+            if (this.startTime === 0) return 0;
+            const duration = Math.floor((Date.now() - this.startTime) / 1000);
+            this.startTime = 0;
+            return duration; // return seconds
+        }
+    },
+
+    // --- 🗓️ Daily Progress & Rewards ---
+    Daily: {
+        getToday() {
+            return new Date().toISOString().split('T')[0];
+        },
+        getTaskKey(taskId) {
+            return `daily_${this.getToday()}_${LukeCore.Profile.current}_${taskId}`;
+        },
+        markComplete(taskId, duration) {
+            const data = { completed: true, duration: duration, starsEarned: 0 };
+            localStorage.setItem(this.getTaskKey(taskId), JSON.stringify(data));
+        },
+        getTaskStatus(taskId) {
+            const data = localStorage.getItem(this.getTaskKey(taskId));
+            return data ? JSON.parse(data) : { completed: false, duration: 0 };
+        },
+        isChestReady() {
+            const tasks = ['english', 'math', 'write-en', 'write-zh'];
+            const allDone = tasks.every(t => this.getTaskStatus(t).completed);
+            const chestOpened = localStorage.getItem(`chest_${this.getToday()}_${LukeCore.Profile.current}`);
+            return allDone && !chestOpened;
+        },
+        openChest() {
+            if (!this.isChestReady()) return 0;
+            const reward = Math.floor(Math.random() * 5) + 1;
+            LukeCore.Stats.addStars(reward);
+            localStorage.setItem(`chest_${this.getToday()}_${LukeCore.Profile.current}`, 'true');
+            return reward;
+        }
+    },
+
     // --- ⭐ Star & Progress Management ---
     Stats: {
         _key(label) {
