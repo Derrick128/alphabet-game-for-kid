@@ -1,0 +1,149 @@
+/* 
+ * Luke's Learning - Core Logic (core.js)
+ * Central management for Sound, Stars, and Data
+ */
+
+const LukeCore = {
+    // --- 🔊 Sound Management ---
+    Audio: {
+        ctx: null,
+        melody: [
+            { n: 261.63, d: 0.5 }, { n: 329.63, d: 0.5 }, { n: 392.00, d: 0.5 },
+            { n: 523.25, d: 1.0 }, { n: 392.00, d: 0.5 }, { n: 329.63, d: 0.5 }
+        ],
+        bgmInterval: null,
+        isMusicPlaying: false,
+
+        init() {
+            if (!this.ctx) {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                this.ctx = new AudioContext();
+            }
+        },
+
+        playNote(freq, duration) {
+            this.init();
+            if (this.ctx.state === 'suspended') this.ctx.resume();
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.value = freq;
+            gain.gain.setValueAtTime(0, this.ctx.currentTime);
+            gain.gain.linearRampToValueAtTime(0.05, this.ctx.currentTime + 0.1);
+            gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration);
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.start();
+            osc.stop(this.ctx.currentTime + duration);
+        },
+
+        playClick() {
+            this.init();
+            if (this.ctx.state === 'suspended') this.ctx.resume();
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(440, this.ctx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(880, this.ctx.currentTime + 0.1);
+            gain.gain.setValueAtTime(0.1, this.ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.1);
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.start();
+            osc.stop(this.ctx.currentTime + 0.1);
+        },
+
+        playSuccess() {
+            [523.25, 659.25, 783.99, 1046.50].forEach((freq, i) => {
+                setTimeout(() => this.playNote(freq, 0.4), i * 100);
+            });
+        },
+
+        toggleBGM() {
+            if (this.isMusicPlaying) {
+                clearInterval(this.bgmInterval);
+                this.isMusicPlaying = false;
+            } else {
+                this.isMusicPlaying = true;
+                this.bgmInterval = setInterval(() => {
+                    let offset = 0;
+                    this.melody.forEach(note => {
+                        setTimeout(() => this.playNote(note.n, note.d), offset * 1000);
+                        offset += note.d;
+                    });
+                }, 4000);
+            }
+            return this.isMusicPlaying;
+        },
+
+        speak(text, lang = 'en-US') {
+            window.speechSynthesis.cancel();
+            const u = new SpeechSynthesisUtterance(text);
+            u.lang = lang;
+            u.rate = 0.9;
+            window.speechSynthesis.speak(u);
+        }
+    },
+
+    // --- ⭐ Star & Progress Management ---
+    Stats: {
+        getStars() {
+            return parseInt(localStorage.getItem('luke_stars') || '0');
+        },
+        addStars(count) {
+            const current = this.getStars();
+            localStorage.setItem('luke_stars', current + count);
+            console.log(`⭐ Stars Added: ${count}. Total: ${current + count}`);
+            return current + count;
+        },
+        // --- 🛍️ Shop & Inventory ---
+        getInventory() {
+            return JSON.parse(localStorage.getItem('luke_inventory') || '[]');
+        },
+        buyItem(itemId, price) {
+            const stars = this.getStars();
+            const inventory = this.getInventory();
+            if (stars >= price && !inventory.includes(itemId)) {
+                localStorage.setItem('luke_stars', stars - price);
+                inventory.push(itemId);
+                localStorage.setItem('luke_inventory', JSON.stringify(inventory));
+                return { success: true, stars: stars - price };
+            }
+            return { success: false, reason: stars < price ? '星星不夠喔！' : '已經擁有了' };
+        },
+        saveOutfit(outfit) {
+            localStorage.setItem('luke_outfit', JSON.stringify(outfit));
+        },
+        getOutfit() {
+            return JSON.parse(localStorage.getItem('luke_outfit') || '[]');
+        },
+        toggleEquip(itemId) {
+            let outfit = this.getOutfit();
+            if (outfit.includes(itemId)) {
+                outfit = outfit.filter(id => id !== itemId);
+            } else {
+                // If we want categories (only one hat, etc.), we'd implement that here
+                outfit.push(itemId);
+            }
+            this.saveOutfit(outfit);
+            return outfit;
+        }
+    },
+
+    // --- 🛠️ UI Helpers ---
+    UI: {
+        showFeedback(msg, duration = 2000) {
+            const el = document.getElementById('feedback-msg');
+            if (el) {
+                el.innerText = msg;
+                el.style.display = 'block';
+                setTimeout(() => el.style.display = 'none', duration);
+            }
+        }
+    }
+};
+
+// Global shorthand for games to use
+const playClick = () => LukeCore.Audio.playClick();
+const playSuccess = () => LukeCore.Audio.playSuccess();
+const showFeedback = (msg) => LukeCore.UI.showFeedback(msg);
