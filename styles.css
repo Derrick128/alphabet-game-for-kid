@@ -15,11 +15,11 @@
     --white: #ffffff;
     --text-main: #1f2937;
     --text-light: #4b5563;
-    --bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
-    --glass-bg: rgba(255, 255, 255, 0.2);
-    --glass-border: rgba(255, 255, 255, 0.3);
-    --shadow-soft: 0 10px 25px rgba(0, 0, 0, 0.1);
-    --shadow-deep: 0 15px 35px rgba(0, 0, 0, 0.2);
+    --bg-gradient: linear-gradient(135deg, #e0f2fe 0%, #fef3c7 50%, #fce7f3 100%);
+    --glass-bg: rgba(255, 255, 255, 0.4);
+    --glass-border: rgba(255, 255, 255, 0.5);
+    --shadow-soft: 0 10px 25px rgba(0, 0, 0, 0.05);
+    --shadow-deep: 0 15px 35px rgba(0, 0, 0, 0.1);
 
     /* Transitions */
     --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
