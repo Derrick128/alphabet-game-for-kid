@@ -241,8 +241,13 @@
 
         function confirmAnswer() {
             if (currentIndex === -1) return;
-            sessionData[currentIndex].imgData = getCanvasWithWhiteBackground();
+            allQuestions[currentIndex].imgData = getCanvasWithWhiteBackground();
             playClick();
+
+            // --- Instant AI Check (Test Mode Only) ---
+            if (LukeCore.Profile.current === 'test') {
+                performInstantCheck(currentIndex);
+            }
 
             if (currentIndex < sessionData.length - 1) {
                 // Find the next blank item
@@ -385,6 +390,26 @@
 
             return t.toDataURL('image/png', 0.5);
         }
+
+        async function performInstantCheck(idx) {
+            const q = sessionData[idx];
+            if (!worker) {
+                const lang = writingType === 'EN' ? 'eng' : 'chi_tra';
+                worker = await Tesseract.createWorker(lang, 1, {
+                    langPath: 'https://tessdata.projectnaptha.com/4.0.0'
+                });
+            }
+            try {
+                const { data: { text } } = await worker.recognize(q.imgData);
+                const recognized = text.trim();
+                const isOk = checkLenient(recognized, q.target);
+                console.log(`[Instant check] ${q.target}: Predicted ${recognized}, Match: ${isOk}`);
+                LukeCore.UI.showFeedback(`辨識結果: ${recognized} (${isOk ? '對' : '錯'})`, isOk ? 'success' : 'error');
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
         function resizeCanvas() {
             const rect = canvas.parentElement.getBoundingClientRect();
             canvas.width = rect.width; canvas.height = rect.height;
