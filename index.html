@@ -9,62 +9,50 @@
     <script src="core.js"></script>
     <script src="data.js"></script>
     <style>
-        header {
-            padding: 40px 20px 20px;
-            text-align: center;
-        }
-
+        /* Interactive Card Grid */
         main {
-            width: 90%;
-            max-width: 650px;
+            width: 95%;
+            max-width: 800px;
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-            gap: 15px;
-            padding-bottom: 80px;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 20px;
+            padding: 20px;
+            padding-bottom: 100px;
         }
 
         .card-icon {
-            font-size: 2.2rem;
-            margin-bottom: 8px;
+            font-size: 3.5rem;
+            margin-bottom: 15px;
+            transition: transform 0.3s;
+        }
+
+        .card-glass:hover .card-icon {
+            transform: scale(1.2) rotate(5deg);
         }
 
         .card-title {
-            font-size: 1rem;
-            font-weight: bold;
-            margin-bottom: 3px;
+            font-size: 1.3rem;
+            font-weight: 900;
+            margin-bottom: 5px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
         }
 
         .card-status {
-            font-size: 0.8rem;
-            font-weight: bold;
+            font-size: 0.85rem;
+            font-weight: 800;
+            padding: 4px 12px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            display: inline-block;
         }
 
         .status-done {
-            color: var(--accent);
+            background: rgba(16, 185, 129, 0.2);
+            color: #10b981;
         }
 
         .status-todo {
-            color: var(--text-light);
-        }
-
-        .eng {
-            border-color: var(--bg-blue);
-            color: #0277bd;
-        }
-
-        .math {
-            border-color: var(--bg-orange);
-            color: #e65100;
-        }
-
-        .write-en {
-            border-color: var(--bg-green);
-            color: #2e7d32;
-        }
-
-        .write-zh {
-            border-color: #fce4ec;
-            color: #c2185b;
+            color: rgba(255, 255, 255, 0.8);
         }
 
         .btn-round {
@@ -89,19 +77,21 @@
             left: 20px;
         }
 
-        /* Treasure Chest */
+        /* Treasure Chest Overhaul */
         #chest-container {
             width: 90%;
             max-width: 600px;
-            background: #fff;
-            border-radius: 20px;
-            padding: 15px;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 10px var(--shadow);
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(8px);
+            border-radius: 30px;
+            padding: 20px;
+            margin-bottom: 25px;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            border: 3px solid #ffd54f;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            box-shadow: var(--shadow-soft);
         }
 
         .chest-icon {
@@ -121,25 +111,27 @@
             filter: grayscale(1);
         }
 
-        /* Profile Switcher */
         .profile-switcher {
             position: absolute;
             top: 20px;
             right: 20px;
-            background: white;
-            padding: 8px 15px;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(5px);
+            padding: 8px 18px;
             border-radius: 20px;
-            box-shadow: 0 4px 10px var(--shadow);
             display: flex;
             align-items: center;
             gap: 10px;
             cursor: pointer;
             z-index: 1000;
-            border: 2px solid transparent;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            transition: 0.2s;
         }
 
         .profile-switcher:hover {
-            border-color: var(--primary);
+            transform: scale(1.05);
+            background: rgba(255, 255, 255, 0.3);
         }
 
         .profile-switcher.test {
@@ -224,259 +216,271 @@
     </style>
 </head>
 
-<body>
+<!-- Decorative Bubbles -->
+<div class="bubble" style="width: 100px; height: 100px; top: 10%; left: -5%; animation-delay: 0s;"></div>
+<div class="bubble" style="width: 60px; height: 60px; top: 60%; left: 80%; animation-delay: 1s;"></div>
+<div class="bubble" style="width: 120px; height: 120px; top: 30%; left: 90%; animation-delay: 0.5s;"></div>
+<div class="bubble" style="width: 80px; height: 80px; top: 85%; left: 5%; animation-delay: 1.5s;"></div>
 
-    <header>
-        <div class="profile-switcher" id="profile-btn" onclick="toggleProfile()">
-            <span class="profile-icon" id="profile-icon">🧒</span>
-            <span class="profile-name" id="profile-name">Luke 模式</span>
-        </div>
+<div class="profile-switcher" id="profile-btn" onclick="toggleProfile()">
+    <span class="profile-icon" id="profile-icon">🧒</span>
+    <span class="profile-name" id="profile-name">Luke 模式</span>
+</div>
 
-        <div class="status-header">
-            <div class="pet-container" id="pet-avatar-container">
-                <span id="base-pet">🦖</span>
-                <div id="acc-layer"></div>
-            </div>
-            <div class="star-badge">
-                ⭐ <span id="star-count">0</span>
-            </div>
+<header class="float-animation" style="text-align:center; padding: 40px 20px;">
+    <div class="status-header">
+        <div class="pet-container" id="pet-avatar-container"
+            style="background: rgba(255,255,255,0.2); border: 4px solid rgba(255,255,255,0.4);">
+            <span id="base-pet">🦖</span>
+            <div id="acc-layer"></div>
         </div>
-        <h1>Luke's Learning</h1>
-        <p>今天想玩什麼呢？</p>
-    </header>
-
-    <div id="chest-container">
-        <div style="flex:1">
-            <div style="font-weight:bold; font-size:1.1rem;">今日寶箱 🎁</div>
-            <div style="font-size:0.85rem; color:var(--text-light);" id="chest-desc">完成所有任務即可開啟！</div>
+        <div class="star-badge"
+            style="background: rgba(255,255,255,0.3); padding: 5px 20px; border-radius: 50px; color: white; font-weight: 900; font-size: 1.5rem;">
+            ⭐ <span id="star-count">0</span>
         </div>
-        <div id="chest-icon" class="chest-icon chest-locked" onclick="tryOpenChest()">📦</div>
     </div>
+    <h1
+        style="color: white; font-size: 3rem; font-weight: 900; text-shadow: 0 4px 10px rgba(0,0,0,0.2); margin: 10px 0;">
+        Luke's Learning</h1>
+    <p style="color: rgba(255,255,255,0.9); font-size: 1.2rem; font-weight: 700;">今天想玩什麼呢？</p>
+</header>
 
-    <!-- Admin Panel (Visible only in Test Mode) -->
-    <div id="admin-panel">
-        <div class="admin-title">🛠️ 管理員控制台 (僅測試模式可見)</div>
-        <div class="reset-btn-group">
-            <button class="btn-reset" onmousedown="startReset('luke')" onmouseup="stopReset()"
-                ontouchstart="startReset('luke')" ontouchend="stopReset()">按住 3 秒初始化 Luke 紀錄</button>
-            <button class="btn-reset" onmousedown="startReset('test')" onmouseup="stopReset()"
-                ontouchstart="startReset('test')" ontouchend="stopReset()">按住 3 秒初始化 Test 紀錄</button>
-        </div>
-        <div class="hold-hint" id="reset-hint">請按住紅色按鈕 3 秒鐘以執行初始化</div>
+<div id="chest-container">
+    <div style="flex:1">
+        <div style="font-weight:bold; font-size:1.1rem;">今日寶箱 🎁</div>
+        <div style="font-size:0.85rem; color:var(--text-light);" id="chest-desc">完成所有任務即可開啟！</div>
     </div>
+    <div id="chest-icon" class="chest-icon chest-locked" onclick="tryOpenChest()">📦</div>
+</div>
 
-    <main>
-        <a href="english.html" class="card eng" onclick="playClick()">
-            <div class="card-icon">🔠</div>
-            <div class="card-title">英文聽力</div>
-            <div id="status-english" class="card-status status-todo">未完成</div>
-        </a>
-
-        <a href="math.html" class="card math" onclick="playClick()">
-            <div class="card-icon">🧮</div>
-            <div class="card-title">數學運算</div>
-            <div id="status-math" class="card-status status-todo">未完成</div>
-        </a>
-
-        <a href="writing.html?type=EN" class="card write-en" onclick="playClick()">
-            <div class="card-icon">✍️</div>
-            <div class="card-title">英文練字</div>
-            <div id="status-write-en" class="card-status status-todo">未完成</div>
-        </a>
-
-        <a href="writing.html?type=ZH" class="card write-zh" onclick="playClick()">
-            <div class="card-icon">ㄅ</div>
-            <div class="card-title">注音符號</div>
-            <div id="status-write-zh" class="card-status status-todo">未完成</div>
-        </a>
-    </main>
-
-    <button id="shop-btn" class="btn btn-accent btn-round" onclick="toggleShop(true)">🛍️</button>
-    <button id="music-toggle" class="btn btn-secondary btn-round" onclick="toggleMusic()">🎵</button>
-
-    <!-- Shop UI -->
-    <div id="shop-overlay" class="shop-overlay" onclick="toggleShop(false)"></div>
-    <div id="shop-modal" class="shop-modal">
-        <h2 style="margin-top:0">星星商店 ⭐</h2>
-        <p id="shop-welcome">收集星星買配件，把小恐龍變帥！</p>
-        <div id="shop-grid" class="shop-grid"></div>
-        <button class="btn btn-gray" style="width:100%; margin-top:20px;" onclick="toggleShop(false)">關閉</button>
+<!-- Admin Panel (Visible only in Test Mode) -->
+<div id="admin-panel">
+    <div class="admin-title">🛠️ 管理員控制台 (僅測試模式可見)</div>
+    <div class="reset-btn-group">
+        <button class="btn-reset" onmousedown="startReset('luke')" onmouseup="stopReset()"
+            ontouchstart="startReset('luke')" ontouchend="stopReset()">按住 3 秒初始化 Luke 紀錄</button>
+        <button class="btn-reset" onmousedown="startReset('test')" onmouseup="stopReset()"
+            ontouchstart="startReset('test')" ontouchend="stopReset()">按住 3 秒初始化 Test 紀錄</button>
     </div>
+    <div class="hold-hint" id="reset-hint">請按住紅色按鈕 3 秒鐘以執行初始化</div>
+</div>
 
-    <div id="feedback-msg"></div>
+<main>
+    <a href="english.html" class="card-glass bounce-in"
+        style="text-decoration:none; text-align:center; animation-delay: 0.1s" onclick="playClick()">
+        <div class="card-icon">🔠</div>
+        <div class="card-title">英文聽力</div>
+        <div id="status-english" class="card-status status-todo">未完成</div>
+    </a>
 
-    <script>
-        const profileDisplay = {
-            luke: { name: 'Luke 模式', icon: '🧒', welcome: '收集星星買配件，把小恐龍變帥！' },
-            test: { name: '測試模式', icon: '👨‍💻', welcome: '正在測試中... 別擔心，這不會影響 Luke 的星星！' }
-        };
+    <a href="math.html" class="card-glass bounce-in"
+        style="text-decoration:none; text-align:center; animation-delay: 0.2s" onclick="playClick()">
+        <div class="card-icon">🧮</div>
+        <div class="card-title">數學運算</div>
+        <div id="status-math" class="card-status status-todo">未完成</div>
+    </a>
 
-        function updateUI() {
-            const currentProfile = LukeCore.Profile.current;
-            const config = profileDisplay[currentProfile];
+    <a href="writing.html?type=EN" class="card-glass bounce-in"
+        style="text-decoration:none; text-align:center; animation-delay: 0.3s" onclick="playClick()">
+        <div class="card-icon">✍️</div>
+        <div class="card-title">英文練字</div>
+        <div id="status-write-en" class="card-status status-todo">未完成</div>
+    </a>
 
-            document.getElementById('profile-name').innerText = config.name;
-            document.getElementById('profile-icon').innerText = config.icon;
-            document.getElementById('profile-btn').className = `profile-switcher ${currentProfile}`;
-            document.getElementById('shop-welcome').innerText = config.welcome;
+    <a href="writing.html?type=ZH" class="card-glass bounce-in"
+        style="text-decoration:none; text-align:center; animation-delay: 0.4s" onclick="playClick()">
+        <div class="card-icon">ㄅ</div>
+        <div class="card-title">注音符號</div>
+        <div id="status-write-zh" class="card-status status-todo">未完成</div>
+    </a>
+</main>
 
-            document.getElementById('star-count').innerText = LukeCore.Stats.getStars();
+<button id="shop-btn" class="btn btn-accent btn-round" onclick="toggleShop(true)">🛍️</button>
+<button id="music-toggle" class="btn btn-secondary btn-round" onclick="toggleMusic()">🎵</button>
 
-            // Show Admin Panel
-            document.getElementById('admin-panel').style.display = currentProfile === 'test' ? 'block' : 'none';
+<!-- Shop UI -->
+<div id="shop-overlay" class="shop-overlay" onclick="toggleShop(false)"></div>
+<div id="shop-modal" class="shop-modal">
+    <h2 style="margin-top:0">星星商店 ⭐</h2>
+    <p id="shop-welcome">收集星星買配件，把小恐龍變帥！</p>
+    <div id="shop-grid" class="shop-grid"></div>
+    <button class="btn btn-gray" style="width:100%; margin-top:20px;" onclick="toggleShop(false)">關閉</button>
+</div>
 
-            updateChecklist();
-            updateChest();
-            renderPet();
+<div id="feedback-msg"></div>
+
+<script>
+    const profileDisplay = {
+        luke: { name: 'Luke 模式', icon: '🧒', welcome: '收集星星買配件，把小恐龍變帥！' },
+        test: { name: '測試模式', icon: '👨‍💻', welcome: '正在測試中... 別擔心，這不會影響 Luke 的星星！' }
+    };
+
+    function updateUI() {
+        const currentProfile = LukeCore.Profile.current;
+        const config = profileDisplay[currentProfile];
+
+        document.getElementById('profile-name').innerText = config.name;
+        document.getElementById('profile-icon').innerText = config.icon;
+        document.getElementById('profile-btn').className = `profile-switcher ${currentProfile}`;
+        document.getElementById('shop-welcome').innerText = config.welcome;
+
+        document.getElementById('star-count').innerText = LukeCore.Stats.getStars();
+
+        // Show Admin Panel
+        document.getElementById('admin-panel').style.display = currentProfile === 'test' ? 'block' : 'none';
+
+        updateChecklist();
+        updateChest();
+        renderPet();
+    }
+
+    function updateChecklist() {
+        const tasks = ['english', 'math', 'write-en', 'write-zh'];
+        tasks.forEach(t => {
+            const status = LukeCore.Daily.getTaskStatus(t);
+            const el = document.getElementById(`status-${t}`);
+            if (status.completed) {
+                const min = Math.floor(status.duration / 60);
+                const sec = status.duration % 60;
+                el.innerText = `✅ 完成 (${min}分${sec}秒)`;
+                el.className = 'card-status status-done';
+            } else {
+                el.innerText = '⭕ 未完成';
+                el.className = 'card-status status-todo';
+            }
+        });
+    }
+
+    function updateChest() {
+        const isReady = LukeCore.Daily.isChestReady();
+        const icon = document.getElementById('chest-icon');
+        const desc = document.getElementById('chest-desc');
+        const opened = localStorage.getItem(`chest_${LukeCore.Daily.getToday()}_${LukeCore.Profile.current}`);
+
+        if (opened) {
+            icon.innerText = '📂';
+            icon.className = 'chest-icon';
+            desc.innerText = '今日獎勵已領取！明天再來！';
+        } else if (isReady) {
+            icon.innerText = '🎁';
+            icon.className = 'chest-icon chest-ready';
+            desc.innerText = '任務達成！快點擊開寶箱！';
+        } else {
+            icon.innerText = '📦';
+            icon.className = 'chest-icon chest-locked';
+            desc.innerText = '完成所有任務即可開啟！';
         }
+    }
 
-        function updateChecklist() {
-            const tasks = ['english', 'math', 'write-en', 'write-zh'];
-            tasks.forEach(t => {
-                const status = LukeCore.Daily.getTaskStatus(t);
-                const el = document.getElementById(`status-${t}`);
-                if (status.completed) {
-                    const min = Math.floor(status.duration / 60);
-                    const sec = status.duration % 60;
-                    el.innerText = `✅ 完成 (${min}分${sec}秒)`;
-                    el.className = 'card-status status-done';
-                } else {
-                    el.innerText = '⭕ 未完成';
-                    el.className = 'card-status status-todo';
-                }
-            });
-        }
-
-        function updateChest() {
-            const isReady = LukeCore.Daily.isChestReady();
-            const icon = document.getElementById('chest-icon');
-            const desc = document.getElementById('chest-desc');
+    function tryOpenChest() {
+        if (LukeCore.Daily.isChestReady()) {
+            const stars = LukeCore.Daily.openChest();
+            LukeCore.Audio.playSuccess();
+            alert(`🎊 恭喜！開寶箱獲得了 ${stars} 顆星星！`);
+            updateUI();
+        } else {
             const opened = localStorage.getItem(`chest_${LukeCore.Daily.getToday()}_${LukeCore.Profile.current}`);
-
-            if (opened) {
-                icon.innerText = '📂';
-                icon.className = 'chest-icon';
-                desc.innerText = '今日獎勵已領取！明天再來！';
-            } else if (isReady) {
-                icon.innerText = '🎁';
-                icon.className = 'chest-icon chest-ready';
-                desc.innerText = '任務達成！快點擊開寶箱！';
-            } else {
-                icon.innerText = '📦';
-                icon.className = 'chest-icon chest-locked';
-                desc.innerText = '完成所有任務即可開啟！';
-            }
-        }
-
-        function tryOpenChest() {
-            if (LukeCore.Daily.isChestReady()) {
-                const stars = LukeCore.Daily.openChest();
-                LukeCore.Audio.playSuccess();
-                alert(`🎊 恭喜！開寶箱獲得了 ${stars} 顆星星！`);
-                updateUI();
-            } else {
-                const opened = localStorage.getItem(`chest_${LukeCore.Daily.getToday()}_${LukeCore.Profile.current}`);
-                if (opened) showFeedback("明天再來開寶箱吧！");
-                else showFeedback("還要努力完成任務喔！");
-                playClick();
-            }
-        }
-
-        function toggleProfile() {
-            const next = LukeCore.Profile.current === 'luke' ? 'test' : 'luke';
-            LukeCore.Profile.set(next);
-        }
-
-        function renderPet() {
-            const accLayer = document.getElementById('acc-layer');
-            accLayer.innerHTML = '';
-            const outfit = LukeCore.Stats.getOutfit();
-
-            outfit.forEach(itemId => {
-                const item = SHOP_DATA.find(i => i.id === itemId);
-                if (item) {
-                    const el = document.createElement('div');
-                    el.className = `pet-accessory acc-${item.id}`;
-                    el.innerText = item.icon;
-                    accLayer.appendChild(el);
-                }
-            });
-        }
-
-        function toggleShop(show) {
-            document.getElementById('shop-modal').style.display = show ? 'block' : 'none';
-            document.getElementById('shop-overlay').style.display = show ? 'block' : 'none';
-            if (show) renderShop();
+            if (opened) showFeedback("明天再來開寶箱吧！");
+            else showFeedback("還要努力完成任務喔！");
             playClick();
         }
+    }
 
-        function renderShop() {
-            const grid = document.getElementById('shop-grid');
-            grid.innerHTML = '';
-            const inventory = LukeCore.Stats.getInventory();
-            const outfit = LukeCore.Stats.getOutfit();
+    function toggleProfile() {
+        const next = LukeCore.Profile.current === 'luke' ? 'test' : 'luke';
+        LukeCore.Profile.set(next);
+    }
 
-            SHOP_DATA.forEach(item => {
-                const isOwned = inventory.includes(item.id);
-                const isEquipped = outfit.includes(item.id);
+    function renderPet() {
+        const accLayer = document.getElementById('acc-layer');
+        accLayer.innerHTML = '';
+        const outfit = LukeCore.Stats.getOutfit();
 
-                const card = document.createElement('div');
-                card.className = `item-card ${isOwned ? 'owned' : ''} ${isEquipped ? 'equipped' : ''}`;
-                card.innerHTML = `
+        outfit.forEach(itemId => {
+            const item = SHOP_DATA.find(i => i.id === itemId);
+            if (item) {
+                const el = document.createElement('div');
+                el.className = `pet-accessory acc-${item.id}`;
+                el.innerText = item.icon;
+                accLayer.appendChild(el);
+            }
+        });
+    }
+
+    function toggleShop(show) {
+        document.getElementById('shop-modal').style.display = show ? 'block' : 'none';
+        document.getElementById('shop-overlay').style.display = show ? 'block' : 'none';
+        if (show) renderShop();
+        playClick();
+    }
+
+    function renderShop() {
+        const grid = document.getElementById('shop-grid');
+        grid.innerHTML = '';
+        const inventory = LukeCore.Stats.getInventory();
+        const outfit = LukeCore.Stats.getOutfit();
+
+        SHOP_DATA.forEach(item => {
+            const isOwned = inventory.includes(item.id);
+            const isEquipped = outfit.includes(item.id);
+
+            const card = document.createElement('div');
+            card.className = `item-card ${isOwned ? 'owned' : ''} ${isEquipped ? 'equipped' : ''}`;
+            card.innerHTML = `
                     <div class="item-icon">${item.icon}</div>
                     <div class="item-name">${item.name}</div>
                     <div class="item-price">${isOwned ? '已擁有' : '⭐ ' + item.price}</div>
                 `;
 
-                card.onclick = () => {
-                    if (isOwned) {
-                        LukeCore.Stats.toggleEquip(item.id);
+            card.onclick = () => {
+                if (isOwned) {
+                    LukeCore.Stats.toggleEquip(item.id);
+                } else {
+                    const res = LukeCore.Stats.buyItem(item.id, item.price);
+                    if (res.success) {
+                        LukeCore.Audio.playSuccess();
                     } else {
-                        const res = LukeCore.Stats.buyItem(item.id, item.price);
-                        if (res.success) {
-                            LukeCore.Audio.playSuccess();
-                        } else {
-                            showFeedback(res.reason);
-                        }
+                        showFeedback(res.reason);
                     }
-                    updateUI();
-                    renderShop();
-                };
-                grid.appendChild(card);
-            });
-        }
-
-        function toggleMusic() {
-            const isPlaying = LukeCore.Audio.toggleBGM();
-            document.getElementById('music-toggle').innerText = isPlaying ? "⏸️" : "🎵";
-            playClick();
-        }
-
-        // --- Foolproof Reset Logic ---
-        let resetTimer = null;
-        function startReset(id) {
-            const hint = document.getElementById('reset-hint');
-            hint.innerText = `正在重置 ${id}... 請持續按住按鈕...`;
-            hint.style.color = 'red';
-
-            resetTimer = setTimeout(() => {
-                if (confirm(`⚠️ 確定要徹底清空 ${id === 'luke' ? 'Luke' : '測試'} 模式的所有紀錄嗎？這無法還原喔！`)) {
-                    LukeCore.Profile.reset(id);
                 }
-                stopReset();
-            }, 3000);
-        }
+                updateUI();
+                renderShop();
+            };
+            grid.appendChild(card);
+        });
+    }
 
-        function stopReset() {
-            clearTimeout(resetTimer);
-            const hint = document.getElementById('reset-hint');
-            hint.innerText = "請按住紅色按鈕 3 秒鐘以執行初始化";
-            hint.style.color = '#777';
-        }
+    function toggleMusic() {
+        const isPlaying = LukeCore.Audio.toggleBGM();
+        document.getElementById('music-toggle').innerText = isPlaying ? "⏸️" : "🎵";
+        playClick();
+    }
 
-        // Initialize
-        updateUI();
-    </script>
+    // --- Foolproof Reset Logic ---
+    let resetTimer = null;
+    function startReset(id) {
+        const hint = document.getElementById('reset-hint');
+        hint.innerText = `正在重置 ${id}... 請持續按住按鈕...`;
+        hint.style.color = 'red';
+
+        resetTimer = setTimeout(() => {
+            if (confirm(`⚠️ 確定要徹底清空 ${id === 'luke' ? 'Luke' : '測試'} 模式的所有紀錄嗎？這無法還原喔！`)) {
+                LukeCore.Profile.reset(id);
+            }
+            stopReset();
+        }, 3000);
+    }
+
+    function stopReset() {
+        clearTimeout(resetTimer);
+        const hint = document.getElementById('reset-hint');
+        hint.innerText = "請按住紅色按鈕 3 秒鐘以執行初始化";
+        hint.style.color = '#777';
+    }
+
+    // Initialize
+    updateUI();
+</script>
 </body>
 
 </html>
