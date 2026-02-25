@@ -1,37 +1,42 @@
 /* 
  * Luke's Learning - Global Styles
- * Unified Design Tokens & UI Components
+ * Unified Design Tokens & UI Components (Playful Premium Edition)
  */
 
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap');
+
 :root {
-    /* Color Palette */
-    --bg-blue: #e3f2fd;
-    --bg-orange: #fff3e0;
-    --bg-green: #f1f8e9;
-    --primary: #03a9f4;
-    --secondary: #ff9800;
-    --accent: #4caf50;
-    --danger: #ef5350;
-    --text-main: #333;
-    --text-light: #666;
+    /* Color Palette - Fun & Playful Gradient Base */
+    --primary: #667eea;
+    --secondary: #764ba2;
+    --accent: #10b981;
+    --danger: #ef4444;
+    --warning: #f59e0b;
     --white: #ffffff;
-    --shadow: rgba(0, 0, 0, 0.1);
+    --text-main: #1f2937;
+    --text-light: #4b5563;
+    --bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+    --glass-bg: rgba(255, 255, 255, 0.2);
+    --glass-border: rgba(255, 255, 255, 0.3);
+    --shadow-soft: 0 10px 25px rgba(0, 0, 0, 0.1);
+    --shadow-deep: 0 15px 35px rgba(0, 0, 0, 0.2);
 
     /* Transitions */
-    --transition: 0.3s ease;
+    --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Base Styles */
 body {
-    font-family: 'Arial Rounded MT Bold', 'Microsoft JhengHei', sans-serif;
+    font-family: 'Nunito', 'Arial Rounded MT Bold', sans-serif;
     margin: 0;
     display: flex;
     flex-direction: column;
     align-items: center;
     min-height: 100vh;
+    overflow-x: hidden;
     touch-action: manipulation;
-    background-color: var(--bg-blue);
-    /* Default */
+    background: var(--bg-gradient);
+    background-attachment: fixed;
     color: var(--text-main);
 }
 
@@ -51,13 +56,17 @@ body {
     justify-content: space-between;
     align-items: center;
     width: 100%;
-    background: var(--white);
-    padding: 12px 20px;
-    border-radius: 20px;
-    box-shadow: 0 5px 15px var(--shadow);
+    background: var(--glass-bg);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    padding: 15px 25px;
+    border-radius: 25px;
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--shadow-soft);
     box-sizing: border-box;
-    margin-bottom: 10px;
+    margin-bottom: 20px;
     z-index: 100;
+    color: white;
 }
 
 .nav-link {
@@ -80,24 +89,30 @@ body {
 
 /* 3D Button Components */
 .btn {
-    padding: 12px 20px;
+    padding: 12px 24px;
     border: none;
-    border-radius: 15px;
+    border-radius: 20px;
     font-size: 1.1rem;
-    font-weight: bold;
+    font-weight: 900;
     cursor: pointer;
     text-align: center;
-    transition: transform 0.1s;
-    box-shadow: 0 4px 0 var(--shadow);
+    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    box-shadow: 0 6px 0 rgba(0, 0, 0, 0.2);
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
+    gap: 10px;
+    color: white;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 0 rgba(0, 0, 0, 0.15);
 }
 
 .btn:active {
-    transform: translateY(3px);
-    box-shadow: 0 1px 0 var(--shadow);
+    transform: translateY(4px);
+    box-shadow: 0 2px 0 rgba(0, 0, 0, 0.2);
 }
 
 .btn-primary {
@@ -128,38 +143,114 @@ body {
 /* Cards */
 .card {
     background: var(--white);
-    border-radius: 20px;
-    padding: 15px;
-    box-shadow: 0 5px 0 var(--shadow);
+    border-radius: 30px;
+    padding: 20px;
+    box-shadow: 0 8px 0 rgba(0, 0, 0, 0.05);
     border: 3px solid transparent;
-    transition: transform 0.1s;
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.card-glass {
+    background: var(--glass-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--glass-border);
+    border-radius: 35px;
+    padding: 25px;
+    color: white;
+    box-shadow: var(--shadow-deep);
 }
 
 /* Animations */
-@keyframes shake {
+@keyframes float {
+
+    0%,
+    100% {
+        transform: translateY(0) rotate(-1deg);
+    }
+
+    50% {
+        transform: translateY(-10px) rotate(1deg);
+    }
+}
+
+@keyframes bounce-in {
     0% {
+        transform: scale(0.3);
+        opacity: 0;
+    }
+
+    50% {
+        transform: scale(1.05);
+        opacity: 0.8;
+    }
+
+    70% {
+        transform: scale(0.9);
+        opacity: 0.9;
+    }
+
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+@keyframes shake {
+
+    0%,
+    100% {
         transform: translateX(0);
     }
 
     25% {
-        transform: translateX(-5px);
-    }
-
-    50% {
-        transform: translateX(5px);
+        transform: translateX(-8px);
     }
 
     75% {
-        transform: translateX(-5px);
-    }
-
-    100% {
-        transform: translateX(0);
+        transform: translateX(8px);
     }
 }
 
+@keyframes pop {
+    0% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.1);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
+
+.float-animation {
+    animation: float 3s ease-in-out infinite;
+}
+
+.bounce-in {
+    animation: bounce-in 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.pop {
+    animation: pop 0.3s ease-in-out;
+}
+
 .shake {
-    animation: shake 0.4s;
+    animation: shake 0.5s ease-in-out;
+}
+
+/* Decor Bubbles */
+.bubble {
+    position: fixed;
+    border-radius: 50%;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.05));
+    backdrop-filter: blur(2px);
+    z-index: -1;
+    pointer-events: none;
+    animation: float 6s ease-in-out infinite;
 }
 
 /* Math Split View Layout */
