@@ -202,6 +202,11 @@
             playClick();
             LukeCore.UI.showFeedback("已填入答案！");
 
+            // --- Instant AI Check (Test Mode Only) ---
+            if (LukeCore.Profile.current === 'test') {
+                performInstantCheck(currentIndex);
+            }
+
             // Auto advance?
             if (currentIndex < TOTAL_QUESTIONS - 1) {
                 // If next is in same page
